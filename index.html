@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zia Quant Fund · Sonar</title>
+<meta name="description" content="Sonar: High-frequency multi-venue L1/L2 order-book forecasting on a 100ms grid for exchange-listed small caps.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['"JetBrains Mono"','monospace']}}}}</script>
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hidden}
+.mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.card{border:1px solid #1e293b;background:rgba(15,23,42,0.7);backdrop-filter:blur(10px);border-radius:.5rem}
+:focus-visible{outline:2px solid #00F0FF;outline-offset:2px}
+.btn{border:1px solid #334155;border-radius:.375rem;padding:.2rem .6rem;font-size:.75rem;color:#94A3B8}
+.btn.on{background:#083344;color:#00F0FF;border-color:#0e7490}
+.dot{display:inline-block;width:.5rem;height:.5rem;border-radius:9999px;background:#64748b}
+.dot.on{background:#10B981;animation:blink 2s infinite}
+@keyframes blink{50%{opacity:.35}}
+.t2{font-size:9px;padding:0 3px;border-radius:3px;background:#083344;color:#00F0FF;cursor:help}
+.ev{display:inline-block;font-size:9px;padding:0 3px;border-radius:3px;color:#090D16;font-weight:700}
+.ev.cy{background:#00F0FF}.ev.am{background:#F59E0B}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="relative min-h-screen">
+<!-- Active Quantum Plexus Background Animation Canvas -->
+<canvas id="bg-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+<div class="relative z-10 flex flex-col min-h-screen">
+<header class="sticky top-0 z-50 border-b border-slate-800 bg-[#080C14]/90 backdrop-blur">
+  <div class="max-w-[1440px] mx-auto px-4 h-14 flex items-center gap-6">
+    <a href="#top" class="font-mono font-semibold tracking-tight text-slate-100 text-base">Zia Quant Fund</a>
+    <nav aria-label="Primary" class="hidden md:flex gap-6 text-sm text-slate-400 font-medium">
+      <a class="hover:text-cyan-400 transition" href="#platform">Platform</a>
+      <a class="hover:text-cyan-400 transition" href="#preview">Terminal Preview</a>
+      <a class="hover:text-cyan-400 transition" href="#architecture">Microstructure Architecture</a>
+      <a class="hover:text-cyan-400 transition" href="#models">Model Suite</a>
+    </nav>
+    <div id="pill" class="mono ml-auto hidden sm:flex items-center gap-2 text-xs text-slate-400 border border-slate-800 rounded-full px-3 py-1 bg-slate-900/50" role="status"></div>
+    <a href="login.html" class="ml-auto sm:ml-0 rounded-md bg-cyan-500 px-4 py-1.5 text-sm font-semibold text-slate-950 hover:bg-cyan-400 transition">Client Login</a>
+  </div>
+</header>
+
+<main id="top" class="flex-grow">
+  <section class="max-w-4xl mx-auto px-4 pt-16 pb-12 text-center">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-xs font-mono mb-4">
+      <span>Sonar Engine v1.2</span> · <span>100ms Multi-Venue Grid</span>
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold tracking-tight leading-tight">Real-Time Market Microstructure & Deep Learning Forecasting</h1>
+    <p class="mt-5 text-slate-400 text-base md:text-lg max-w-3xl mx-auto leading-relaxed">Sonar synchronizes multi-venue Level 1 & Level 2 order books (Nasdaq TotalView & NYSE ArcaBook) at 100ms resolution to forecast 180-second forward price dynamics across exchange-listed small-cap equities.</p>
+    <div class="mt-8 flex justify-center gap-3">
+      <a href="login.html" class="rounded-md bg-cyan-500 px-5 py-2.5 font-semibold text-slate-950 hover:bg-cyan-400 transition">Launch Terminal</a>
+      <a href="#architecture" class="rounded-md border border-slate-700 px-5 py-2.5 font-semibold text-slate-300 hover:bg-slate-800 transition">View Architecture</a>
+    </div>
+  </section>
+
+  <section id="preview" aria-label="Terminal preview" class="max-w-[1440px] mx-auto px-4 pb-14">
+    <div id="drop" role="alert" class="hidden mb-3 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white"></div>
+    <div class="card p-2 mb-3 flex flex-wrap items-center gap-2 border-slate-800">
+      <form id="qf" class="flex"><label for="q" class="sr-only">Symbol</label><input id="q" value="ONEG" autocomplete="off" class="mono w-28 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm uppercase text-slate-100"><button class="btn ml-1 hover:bg-slate-800">Go</button></form>
+      <span id="sess" class="btn !text-cyan-400 font-mono" title="US equity session"></span>
+      <div role="group" aria-label="Timeframe" class="flex gap-1 ml-auto">
+        <button class="btn" data-tf="1m">1m</button><button class="btn on" data-tf="5m">5m</button><button class="btn" data-tf="15m">15m</button><button class="btn" data-tf="1D">1D</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-3">
+      <!-- Market Movers Panel -->
+      <div class="card col-span-12 lg:col-span-3 flex flex-col">
+        <div role="group" aria-label="Movers view" class="flex gap-1 p-2 border-b border-slate-800"><button class="btn on" data-tab="gainers">Gainers</button><button class="btn" data-tab="losers">Losers</button><button class="btn" data-tab="active">Most Active</button></div>
+        <div class="overflow-auto max-h-[460px]">
+          <table class="mono w-full text-xs"><thead class="text-slate-400 bg-slate-900/50 sticky top-0"><tr><th class="text-left font-normal pl-2 py-1.5">Symbol</th><th class="text-right font-normal py-1.5">Price</th><th class="text-right font-normal py-1.5">Chg</th><th class="text-right font-normal py-1.5">Vol</th><th class="text-right font-normal pr-2 py-1.5">RVOL</th></tr></thead><tbody id="movers"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Chart Panel -->
+      <div class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pb-2 border-b border-slate-800/80">
+          <span id="csym" class="mono font-semibold text-sm text-cyan-400"></span><span id="ohlc" class="mono text-[11px] text-slate-400"></span>
+          <div class="ml-auto flex gap-1" role="group" aria-label="Indicators"><button class="btn on" data-ind="vwap" aria-pressed="true">VWAP</button><button class="btn on" data-ind="e9" aria-pressed="true">EMA 9</button><button class="btn" data-ind="e20" aria-pressed="false">EMA 20</button></div>
+        </div>
+        <div class="relative h-[420px] mt-1"><div id="chart" class="absolute inset-0"></div><canvas id="vp" class="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true"></canvas></div>
+        <p class="px-1 pt-1 text-[10px] text-slate-500 border-t border-slate-800/50 mt-auto">Chart powered by <a class="underline hover:text-slate-400" href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView Lightweight Charts™</a></p>
+      </div>
+
+      <!-- Level 2 DOM & Tape Panel -->
+      <div class="col-span-12 lg:col-span-3 space-y-3">
+        <div class="card p-2">
+          <div class="flex items-center justify-between px-1 pb-1 border-b border-slate-800">
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Level 2 DOM Ladder</h2>
+            <span class="text-[10px] text-cyan-400 font-mono">100ms Grid</span>
+          </div>
+          <div id="ladder" class="mt-2"></div>
+          <div class="mt-2 flex flex-col gap-1 px-1 text-[10px] text-slate-400 border-t border-slate-800/80 pt-1.5">
+            <div class="flex items-center gap-1.5"><span class="ev cy">+1</span><span><b>Iceberg Absorption:</b> Aggressive print ≥ $10k</span></div>
+            <div class="flex items-center gap-1.5"><span class="ev am">−1</span><span><b>Unexecuted Depletion:</b> Depletion ≥ $10k, AIR ≤ 0.05</span></div>
+          </div>
+        </div>
+        <div class="card p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Time & Sales</h2><div id="tape" class="mono mt-1 px-1 text-[11px] leading-[18px]"></div></div>
+      </div>
+    </div>
+
+    <!-- Models & Health Strip -->
+    <div class="grid md:grid-cols-3 gap-3 mt-3">
+      <div class="card md:col-span-2 p-4 relative overflow-hidden">
+        <h2 class="text-sm font-semibold text-slate-200">180-Second Competing Model Probabilities <span class="font-normal text-slate-400">· Spread-Adjusted Triple Barrier</span></h2>
+        <div id="probs" class="mt-3 space-y-2 blur-sm select-none" aria-hidden="true"></div>
+        <div class="absolute inset-0 grid place-items-center bg-slate-950/70 backdrop-blur-sm text-center"><div>
+          <svg class="mx-auto h-5 w-5 text-cyan-400 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+          <p class="text-sm font-semibold text-slate-200">Live Model Telemetry Locked</p>
+          <p class="text-xs text-slate-400 mt-0.5">Authenticated client session required for live probability streams.</p>
+          <a href="login.html" class="btn !text-cyan-400 !border-cyan-500/40 mt-2.5 inline-block font-mono">Request Access / Login</a></div></div>
+      </div>
+      <div class="card p-4"><h2 class="text-sm font-semibold text-slate-200">Ingestion Telemetry</h2><dl id="health" class="mono mt-3 space-y-1.5 text-xs"></dl></div>
+    </div>
+  </section>
+
+  <!-- Expanded Technical Sections -->
+  <section id="platform" class="max-w-5xl mx-auto px-4 pb-16">
+    <h2 class="text-2xl font-bold tracking-tight">Platform Access Hierarchy</h2>
+    <p class="mt-1 text-slate-400 text-sm">Public portal offers open research documentation; live data and model outputs require authentication.</p>
+    <div class="mt-6 grid md:grid-cols-2 gap-4">
+      <div class="card p-6"><h3 class="font-semibold text-base text-slate-200">Public Research Portal</h3><ul class="mt-3 space-y-2 text-sm text-slate-400"><li>· Small-Cap Daily Movers & Market Breadth</li><li>· Historical Bar Charts & Volume Profile</li><li>· Technical Specifications & Architectural Whitepapers</li><li>· Quantitative Methodology Glossary</li></ul></div>
+      <div class="card p-6 border-cyan-500/40 bg-cyan-950/10"><h3 class="font-semibold text-base text-cyan-400">Authenticated Client Terminal</h3><ul class="mt-3 space-y-2 text-sm text-slate-300"><li>· Live Multi-Venue L2 Depth Ladder (100ms Resolution)</li><li>· Real-Time Calibrated Model Probabilities (180s Horizon)</li><li>· Microstructure Anomaly Signals (AIR Icebergs & Spoof Depletions)</li><li>· Replay System for Historical Order Book Sequences</li></ul></div>
+    </div>
+  </section>
+
+  <section id="architecture" class="max-w-5xl mx-auto px-4 pb-16"><h2 class="text-2xl font-bold tracking-tight">Market Microstructure Engine Architecture</h2><p class="mt-1 text-slate-400 text-sm">Engineered for deterministic sub-second alignment and zero-data-loss streaming.</p><div id="arch" class="mt-6 grid sm:grid-cols-2 gap-4"></div></section>
+  <section id="models" class="max-w-5xl mx-auto px-4 pb-16"><h2 class="text-2xl font-bold tracking-tight">180-Second Competing Model Suite</h2><p class="mt-1 text-slate-400 text-sm">All three model families evaluate the exact same spread-adjusted triple-barrier target (τ = 180s).</p><div id="mod" class="mt-6 grid md:grid-cols-3 gap-4"></div></section>
+
+  <section class="max-w-3xl mx-auto px-4 pb-20"><div class="card p-8 text-center border-cyan-500/30 bg-slate-900/40">
+    <h2 class="text-xl font-bold text-slate-100">Authenticated Terminal Access</h2>
+    <p class="mt-2 text-slate-400 text-sm">Live order book depth feeds, calibrated model probability outputs, and execution signals are restricted to verified fund operators.</p>
+    <a href="login.html" class="mt-5 inline-block rounded-md bg-cyan-500 px-6 py-2.5 font-semibold text-slate-950 hover:bg-cyan-400 transition">Authenticate Session</a>
+  </div></section>
+</main>
+
+<footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-400 space-y-1.5">
+  <p class="font-medium text-slate-300">Developer: Scottie Dunnavan</p>
+  <p>© 2026 Zia Quant Fund. All rights reserved.</p>
+  <p class="text-slate-500">Quantitative research platform. Advisory research and paper trading demonstration portal only.</p>
+  <p class="text-slate-500 font-mono">Infrastructure: Ubuntu Server 24.04 LTS · Cloudflare Tunnel Route</p>
+</footer>
+</div>
+
+<script src="sonar-ui.js"></script>
+<script>
+// Quantum Plexus Background Network Animation
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let width, height, particles = [];
+
+function resize() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+for (let i = 0; i < 55; i++) {
+  particles.push({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    vx: (Math.random() - 0.5) * 0.5,
+    vy: (Math.random() - 0.5) * 0.5,
+    radius: Math.random() * 1.8 + 0.8
+  });
+}
+
+function animateBg() {
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.55)';
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
+
+  particles.forEach((p, index) => {
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.x < 0 || p.x > width) p.vx *= -1;
+    if (p.y < 0 || p.y > height) p.vy *= -1;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (let j = index + 1; j < particles.length; j++) {
+      const p2 = particles[j];
+      const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+      if (dist < 140) {
+        ctx.lineWidth = 1 - (dist / 140);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+      }
+    }
+  });
+  requestAnimationFrame(animateBg);
+}
+animateBg();
+
+const ARCH=[
+["100ms Software Grid Aligner","Resamples multi-venue L1 NBBO quotes, trades, and 10-level depth snapshots (Nasdaq TotalView & NYSE ArcaBook) onto a strict 100ms grid with a 10ms trade reorder window and a 250ms debounced crossed-book filter."],
+["Microstructure Feature Pipeline","Calculates Relative Price Distance (Δp̃<sub>i</sub>) for sparse small-cap books, 10-level MLOFI, Venue-Matched AIR (AIR<sub>v</sub> ≥ 1.0 Iceberg Absorption vs ≤ 0.05 Unexecuted Depletion), and Micro-Price Divergence (ΔP<sub>μ</sub>)."],
+["Atomic Parquet Storage","High-throughput columnar buffers logging dual nanosecond timestamps (exch_ts_ns exchange UTC nanoseconds & recv_mono_ns local stopwatch) backed by atomic .tmp → os.replace crash-safe flushes."],
+["Small-Cap Universe ($1M–$1B)","Automated universe scanner covering exchange-listed equities across Nasdaq, NYSE, NYSE American, and NYSE Arca with Reg NMS Rule 612 sub-penny support and zero arbitrary price floors."]
+];
+
+const MODELS=[
+["Baseline ML (RF & XGBoost)","Evaluates a 2D tabular feature matrix (48 metrics including L1 returns, RVOL, Micro-Price divergence, 10-level MLOFI, and top-3 AIR ratios) using GPU-accelerated XGBoost and class-balanced Random Forests.","Planned"],
+["Sequence Macro (LSTM-Attention)","Processes 60 steps of 1-minute macro bars (OHLCV, RVOL, VWAP distance, signed volume delta) through a 2-layer stacked LSTM paired with a Temporal Self-Attention head to capture intraday trend momentum.","Planned"],
+["Order-Book Micro (DeepLOB)","4D spatiotemporal CNN+LSTM processing 600 ticks (60s at 100ms) of 10-level depth + 20-feature aux branch. Pre-trained on FI-2010 and fine-tuned with a 0.1x differential learning rate on spatial CNN layers.","Planned"]
+];
+
+document.getElementById("arch").innerHTML=ARCH.map(([t,d])=>`<article class="card p-5"><h3 class="font-mono text-sm font-semibold text-cyan-400 mb-1.5">${t}</h3><p class="text-xs text-slate-400 leading-relaxed">${d}</p></article>`).join("");
+document.getElementById("mod").innerHTML=MODELS.map(([t,d,s])=>`<article class="card p-5 flex flex-col justify-between"><div class="flex items-start justify-between gap-2 mb-2"><h3 class="font-semibold text-sm text-slate-200">${t}</h3><span class="rounded-full px-2 py-0.5 text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700">${s}</span></div><p class="text-xs text-slate-400 leading-relaxed">${d}</p></article>`).join("");
+Sonar.init();
+</script>
+</body>
+</html>

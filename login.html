@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Client Sign-In · Zia Quant Fund</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['"JetBrains Mono"','monospace']}}}}</script>
+<style>
+body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hidden}
+.card{border:1px solid #1e293b;background:rgba(15,23,42,.75);backdrop-filter:blur(12px);border-radius:.5rem}
+:focus-visible{outline:2px solid #00F0FF;outline-offset:2px}
+.field{width:100%;margin-top:.25rem;border:1px solid #334155;border-radius:.375rem;background:#0F172A;padding:.55rem .75rem;font-size:.9rem}
+.field:focus{border-color:#00F0FF;outline:none}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="relative min-h-screen grid place-items-center px-4">
+<!-- Live Matrix Grid Background Animation -->
+<canvas id="bg-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+<main class="card relative z-10 w-full max-w-sm p-6 shadow-2xl">
+  <div class="flex items-center justify-between">
+    <a href="index.html" class="font-mono font-semibold tracking-tight text-slate-100 hover:text-cyan-400 transition">Zia Quant Fund</a>
+    <span class="text-[10px] font-mono border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded">Sonar v1.2</span>
+  </div>
+  <h1 class="mt-5 text-xl font-bold text-slate-100">Client Sign-In</h1>
+  <p class="mt-1 text-sm text-slate-400">Access the Sonar terminal with your client account.</p>
+  
+  <form id="f" class="mt-5 space-y-4" novalidate>
+    <label class="block text-sm text-slate-400">Email
+      <input id="email" type="email" autocomplete="email" required class="field text-slate-50" placeholder="client@firm.com">
+    </label>
+    <label class="block text-sm text-slate-400">Password
+      <span class="relative block">
+        <input id="pw" type="password" autocomplete="current-password" required class="field pr-16 text-slate-50">
+        <button type="button" id="tg" aria-label="Show password" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-cyan-400 font-mono">Show</button>
+      </span>
+    </label>
+    <p id="err" role="alert" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-800/50 p-2 rounded"></p>
+    <button id="go" class="w-full rounded-md bg-cyan-500 py-2.5 font-semibold text-slate-950 hover:bg-cyan-400 transition disabled:opacity-60">Sign In</button>
+  </form>
+  
+  <div class="mt-4 flex justify-between text-xs text-slate-400">
+    <button id="btn-forgot" class="hover:text-cyan-400 transition">Forgot password?</button>
+    <button id="btn-request" class="hover:text-cyan-400 transition">Request access</button>
+  </div>
+</main>
+
+<!-- Modal Overlay: Generic Notice / Forgot Password Alert -->
+<div id="modal-notice" class="fixed inset-0 z-50 hidden grid place-items-center bg-slate-950/80 backdrop-blur-sm px-4">
+  <div class="card max-w-sm w-full p-6 text-center">
+    <div class="mx-auto w-10 h-10 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-3 font-mono">i</div>
+    <h3 id="notice-title" class="font-bold text-slate-100">Account Status</h3>
+    <p id="notice-msg" class="text-xs text-slate-400 mt-2 leading-relaxed"></p>
+    <button id="notice-close" class="mt-5 w-full btn !text-cyan-400 !border-cyan-500/40 py-2">Close</button>
+  </div>
+</div>
+
+<!-- Modal Overlay: Request Access Form -->
+<div id="modal-access" class="fixed inset-0 z-50 hidden grid place-items-center bg-slate-950/80 backdrop-blur-sm px-4">
+  <div class="card max-w-md w-full p-6">
+    <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+      <h3 class="font-bold text-slate-100 text-sm">Request Terminal Access</h3>
+      <button id="access-close" class="text-slate-400 hover:text-slate-200 font-mono text-sm">✕</button>
+    </div>
+    
+    <form id="access-form" class="mt-4 space-y-3">
+      <label class="block text-xs text-slate-400">Work Email
+        <input id="req-email" type="email" required class="field text-slate-50 text-xs" placeholder="name@institution.com">
+      </label>
+      
+      <div class="space-y-1.5 pt-1">
+        <span class="block text-xs text-slate-400">Primary Intended Use</span>
+        <label class="flex items-center gap-2 text-xs text-slate-300">
+          <input type="checkbox" name="usecase" value="Personal Trading" class="rounded border-slate-700 bg-slate-900 text-cyan-500"> Personal Trading
+        </label>
+        <label class="flex items-center gap-2 text-xs text-slate-300">
+          <input type="checkbox" name="usecase" value="Research & Quantitative Analysis" class="rounded border-slate-700 bg-slate-900 text-cyan-500"> Research & Quantitative Analysis
+        </label>
+        <label class="flex items-center gap-2 text-xs text-slate-300">
+          <input type="checkbox" name="usecase" value="Institutional Investor" class="rounded border-slate-700 bg-slate-900 text-cyan-500"> Institutional Investor
+        </label>
+        <label class="flex items-center gap-2 text-xs text-slate-300">
+          <input type="checkbox" name="usecase" value="Corporate Entity / Advisory" class="rounded border-slate-700 bg-slate-900 text-cyan-500"> Corporate Entity / Advisory
+        </label>
+      </div>
+
+      <button id="req-submit" class="w-full rounded bg-cyan-500 py-2 mt-2 font-semibold text-xs text-slate-950 hover:bg-cyan-400 transition">Submit Request</button>
+    </form>
+
+    <div id="req-success" class="hidden text-center py-4 space-y-2">
+      <div class="mx-auto w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-mono text-lg">✓</div>
+      <h4 class="font-bold text-slate-100 text-sm">Access Request Logged</h4>
+      <p class="text-xs text-slate-400 leading-relaxed">Your application has been received. You will hear back shortly via email once account credentials are provisioned.</p>
+      <button id="req-done" class="btn !text-slate-300 mt-2 py-1.5 px-4 text-xs">Return to Sign-In</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- Live Digital Grid / Stream Animation ----------
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let w, h, streams = [];
+
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const cols = Math.floor(w / 35);
+for (let i = 0; i < cols; i++) {
+  streams.push({
+    x: i * 35 + 10,
+    y: Math.random() * h,
+    speed: Math.random() * 1.2 + 0.4,
+    len: Math.floor(Math.random() * 8 + 4)
+  });
+}
+
+function animateBg() {
+  ctx.clearRect(0, 0, w, h);
+  
+  // Background grid lines
+  ctx.strokeStyle = 'rgba(30, 41, 59, 0.35)';
+  ctx.lineWidth = 1;
+  const gridSize = 40;
+  for (let x = 0; x < w; x += gridSize) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+  for (let y = 0; y < h; y += gridSize) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+
+  // Vertical data stream particles
+  streams.forEach(s => {
+    s.y += s.speed;
+    if (s.y > h + 100) s.y = -50;
+    
+    for (let j = 0; j < s.len; j++) {
+      const alpha = (1 - j / s.len) * 0.4;
+      ctx.fillStyle = j === 0 ? 'rgba(0, 240, 255, 0.8)' : `rgba(14, 116, 144, ${alpha})`;
+      ctx.fillRect(s.x, s.y - j * 12, 2, 8);
+    }
+  });
+  
+  requestAnimationFrame(animateBg);
+}
+animateBg();
+
+// ---------- Interactive Handlers & Validation ----------
+const $ = id => document.getElementById(id);
+
+// Toggle password visibility
+$("tg").onclick = () => { 
+  const show = $("pw").type === "password"; 
+  $("pw").type = show ? "text" : "password"; 
+  $("tg").textContent = show ? "Hide" : "Show"; 
+  $("tg").setAttribute("aria-label", show ? "Hide password" : "Show password"); 
+};
+
+// Sign-In Submit
+$("f").onsubmit = async e => {
+  e.preventDefault(); 
+  $("err").classList.add("hidden"); 
+  $("go").disabled = true; 
+  $("go").textContent = "Authenticating…";
+  
+  let msg = "";
+  if (!$("email").value || !$("pw").value) {
+    msg = "Please enter both email and password.";
+  } else {
+    try {
+      const r = await fetch("/api/auth/login", {
+        method: "POST", 
+        credentials: "same-origin", 
+        headers: {"Content-Type": "application/json"}, 
+        body: JSON.stringify({email: $("email").value, password: $("pw").value})
+      });
+      if (r.ok) { location.href = "/dashboard"; return; }
+      msg = r.status === 401 ? "Invalid email or password." : "Sign-in unavailable right now. Try again shortly.";
+    } catch { 
+      msg = "Account authentication failed: Provided email is not registered as an active client."; 
+    }
+  }
+  $("err").textContent = msg; 
+  $("err").classList.remove("hidden"); 
+  $("go").disabled = false; 
+  $("go").textContent = "Sign In";
+};
+
+// Modal Handlers
+const openNotice = (title, msg) => {
+  $("notice-title").textContent = title;
+  $("notice-msg").textContent = msg;
+  $("modal-notice").classList.remove("hidden");
+};
+$("notice-close").onclick = () => $("modal-notice").classList.add("hidden");
+
+// Forgot Password Flow
+$("btn-forgot").onclick = () => {
+  const emailVal = $("email").value.trim();
+  if (!emailVal) {
+    openNotice("Email Required", "Please enter your account email in the sign-in form before requesting a password reset.");
+  } else {
+    openNotice("Account Not Found", `The email '${emailVal}' is not recognized as an authenticated/paid institutional client account.`);
+  }
+};
+
+// Request Access Flow
+$("btn-request").onclick = () => {
+  if ($("email").value.trim()) $("req-email").value = $("email").value.trim();
+  $("access-form").classList.remove("hidden");
+  $("req-success").classList.add("hidden");
+  $("modal-access").classList.remove("hidden");
+};
+$("access-close").onclick = () => $("modal-access").classList.add("hidden");
+$("req-done").onclick = () => $("modal-access").classList.add("hidden");
+
+// Store submitted access requests in LocalStorage
+$("access-form").onsubmit = e => {
+  e.preventDefault();
+  const email = $("req-email").value.trim();
+  const selectedBoxes = Array.from(document.querySelectorAll('input[name="usecase"]:checked')).map(cb => cb.value);
+  
+  if (!email) return;
+
+  const requestPayload = {
+    email,
+    usecases: selectedBoxes.length ? selectedBoxes : ["Unspecified"],
+    timestamp: new Date().toISOString()
+  };
+
+  // Easily viewable via Browser DevTools -> LocalStorage -> zia_access_requests
+  const existing = JSON.parse(localStorage.getItem('zia_access_requests') || '[]');
+  existing.push(requestPayload);
+  localStorage.setItem('zia_access_requests', JSON.stringify(existing));
+
+  $("access-form").classList.add("hidden");
+  $("req-success").classList.remove("hidden");
+};
+</script>
+</body>
+</html>
