@@ -1,4 +1,7 @@
-// Sonar UI: data layer + panel renderers. A future dashboard.html imports this same file unchanged.
+/**
+ * Author: Scottie Dunnavan
+ * Sonar UI: Data layer + Panel renderers + TradingView Advanced Chart Integration.
+ */
 const Sonar = (() => {
 const API_BASE = "";
 const DATA_SOURCE = "sample"; // "sample" | "api"
@@ -27,18 +30,6 @@ const base = s => SYMS[s] || ["Sample " + s, 1 + (hash(s) % 700) / 100, (hash(s)
 const S = {
   movers: () => Object.keys(SYMS).map(k => { const r = rng(hash(k)), [name, price, pct] = SYMS[k];
     return {symbol: k, name, price, pct_change: pct, volume: Math.round(2e5 + r() * 9e6), rvol: +(1 + r() * 5).toFixed(1), mkt_cap: Math.round(2e7 + r() * 4e8), session: "regular"}; }),
-  
-  bars: (symbol, tf) => {
-    const step = {"1m": 60, "5m": 300, "15m": 900, "1D": 86400}[tf] || 60, r = rng(hash(symbol + tf)), p0 = base(symbol)[1], d = dp(p0), bars = [];
-    let c = p0 * 0.9, t = Math.floor(Date.now() / 1000 / step) * step - 119 * step;
-    for (let i = 0; i < 120; i++, t += step) {
-      const o = c; c = o * (1 + (r() - 0.5) * 0.02 + 0.0008);
-      bars.push({t, o: +o.toFixed(d), h: +(Math.max(o, c) * (1 + r() * 0.005)).toFixed(d), l: +(Math.min(o, c) * (1 - r() * 0.005)).toFixed(d), c: +c.toFixed(d), v: Math.round(2e3 + r() * 4e4 * (i > 100 ? 3 : 1))});
-    }
-    const lo = Math.min(...bars.map(b => b.l)), hi = Math.max(...bars.map(b => b.h)), n = 24, w = (hi - lo) / n, profile = Array.from({length: n}, (_, i) => ({price: lo + w * (i + 0.5), volume: 0}));
-    bars.forEach(b => profile[Math.min(n - 1, Math.floor(((b.o + b.c) / 2 - lo) / w))].volume += b.v);
-    return {symbol, tf, bars, profile};
-  },
   
   book: symbol => {
     const mid = base(symbol)[1], t = tk(mid), r = rng(hash(symbol) + Math.floor(Date.now() / 2000)), events = [];
@@ -77,7 +68,6 @@ const live = DATA_SOURCE === "api";
 const get = path => fetch(API_BASE + path, {credentials: "same-origin"}).then(r => { if (!r.ok) throw r.status; return r.json(); });
 const P = {
   getMovers: () => live ? get("/api/movers") : S.movers(),
-  getBars: (s, tf) => live ? get(`/api/bars/${s}?tf=${tf}`) : S.bars(s, tf),
   getBook: s => live ? get(`/api/book/${s}`) : S.book(s),
   getTape: s => live ? get(`/api/tape/${s}`) : S.tape(s),
   getProbabilities: s => live ? get(`/api/probs/${s}`) : S.probs(s),
@@ -85,44 +75,42 @@ const P = {
 };
 
 // ---------- RENDERERS ----------
-const st = {sym: "ONEG", tf: "5m", tab: "gainers", vwap: true, e9: true, e20: false};
-let chart, cs, vs, lv, l9, l20, bars = [], prof = [], movers = [];
+const st = {sym: "ONEG", tf: "5m", tab: "gainers"};
+let movers = [];
 
-function initChart() {
-  const el = $("#chart"), line = color => chart.addLineSeries({color, lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false});
-  chart = LightweightCharts.createChart(el, {autoSize: true, layout: {background: {type: "solid", color: "transparent"}, textColor: "#94A3B8", fontFamily: "JetBrains Mono"},
-    grid: {vertLines: {color: "#1e293b55"}, horzLines: {color: "#1e293b55"}}, rightPriceScale: {borderColor: "#1e293b"}, timeScale: {borderColor: "#1e293b", timeVisible: true}, crosshair: {mode: 0}});
-  cs = chart.addCandlestickSeries({upColor: "#10B981", downColor: "#F43F5E", borderVisible: false, wickUpColor: "#10B981", wickDownColor: "#F43F5E"});
-  cs.priceScale().applyOptions({scaleMargins: {top: 0.05, bottom: 0.22}});
-  vs = chart.addHistogramSeries({priceFormat: {type: "volume"}, priceScaleId: "vol"});
-  chart.priceScale("vol").applyOptions({scaleMargins: {top: 0.82, bottom: 0}});
-  lv = line("#00F0FF"); l9 = line("#F8FAFC"); l20 = line("#A78BFA"); applyInd();
-  chart.subscribeCrosshairMove(p => { const d = (p.seriesData && p.seriesData.get(cs)) || (bars.length && {open: bars.at(-1).o, high: bars.at(-1).h, low: bars.at(-1).l, close: bars.at(-1).c});
-    $("#ohlc").textContent = d ? ["open", "high", "low", "close"].map(k => k[0].toUpperCase() + " " + f(d[k], dp(d.close))).join("  ") : ""; });
-  chart.timeScale().subscribeVisibleLogicalRangeChange(() => requestAnimationFrame(drawProfile));
-  new ResizeObserver(() => requestAnimationFrame(drawProfile)).observe(el);
-}
-const applyInd = () => { lv.applyOptions({visible: st.vwap}); l9.applyOptions({visible: st.e9}); l20.applyOptions({visible: st.e20}); };
+function renderTVChart(symbol, tf) {
+  const container = $("#tradingview_chart");
+  if (!container) return;
+  container.innerHTML = "";
+  
+  const tfMap = { "1m": "1", "5m": "5", "15m": "15", "1D": "D" };
+  const interval = tfMap[tf] || "5";
+  const formattedSymbol = symbol.includes(":") ? symbol : `NASDAQ:${symbol}`;
 
-function drawProfile() {
-  const el = $("#chart"), cv = $("#vp"), r = devicePixelRatio || 1, w = el.clientWidth, h = el.clientHeight;
-  cv.width = w * r; cv.height = h * r; const x = cv.getContext("2d"); x.scale(r, r);
-  if (prof.length < 2) return;
-  const mx = Math.max(...prof.map(b => b.volume)), step = prof[1].price - prof[0].price, right = w - chart.priceScale("right").width();
-  for (const b of prof) { const y1 = cs.priceToCoordinate(b.price + step / 2), y2 = cs.priceToCoordinate(b.price - step / 2); if (y1 == null || y2 == null) continue;
-    const len = b.volume / mx * w * 0.18; x.fillStyle = b.volume === mx ? "rgba(0,240,255,.45)" : "rgba(6,182,212,.22)"; x.fillRect(right - len, y1, len, Math.max(1, y2 - y1 - 1)); }
-}
-
-async function loadBars() {
-  const d = await safe(P.getBars(st.sym, st.tf)); if (!d || !d.bars.length) return;
-  bars = d.bars; prof = d.profile; const p = bars[0].c;
-  cs.applyOptions({priceFormat: {type: "price", precision: dp(p), minMove: tk(p)}});
-  cs.setData(bars.map(b => ({time: b.t, open: b.o, high: b.h, low: b.l, close: b.c})));
-  vs.setData(bars.map(b => ({time: b.t, value: b.v, color: b.c >= b.o ? "#10B98166" : "#F43F5E66"})));
-  let pv = 0, vv = 0; lv.setData(bars.map(b => { pv += (b.h + b.l + b.c) / 3 * b.v; vv += b.v; return {time: b.t, value: pv / vv}; }));
-  const ema = n => { let e = bars[0].c; const k = 2 / (n + 1); return bars.map(b => ({time: b.t, value: (e = b.c * k + e * (1 - k))})); };
-  l9.setData(ema(9)); l20.setData(ema(20));
-  $("#csym").textContent = st.sym + " · " + st.tf; chart.timeScale().fitContent(); setTimeout(drawProfile, 80);
+  if (typeof TradingView !== "undefined") {
+    new TradingView.widget({
+      "autosize": true,
+      "symbol": formattedSymbol,
+      "interval": interval,
+      "timezone": "Etc/UTC",
+      "theme": "dark",
+      "style": "1",
+      "locale": "en",
+      "toolbar_bg": "#080C14",
+      "enable_publishing": false,
+      "hide_top_toolbar": false,
+      "hide_legend": false,
+      "save_image": false,
+      "calendar": true,
+      "studies": [
+        "Volume@tv-basicstudies",
+        "VWAP@tv-basicstudies",
+        "Moving Average Ribbon@tv-basicstudies"
+      ],
+      "container_id": "tradingview_chart"
+    });
+  }
+  $("#csym").textContent = `${st.sym} · ${st.tf}`;
 }
 
 function drawMovers() {
@@ -133,7 +121,6 @@ function drawMovers() {
     <td class="text-right text-slate-400">${cmp.format(m.volume)}</td><td class="text-right pr-2 text-slate-400">${m.rvol.toFixed(1)}</td></tr>`).join("");
 }
 
-// LEVEL 2 DOM LADDER: Cleaned up mid-price alignment in the center column without "MID:" label
 function drawBook(b) {
   if (!b) return;
   const d = dp(b.mid), mid = b.mid;
@@ -169,7 +156,6 @@ function drawBook(b) {
   });
 
   const spread = asks.length && bids.length ? asks[asks.length - 1].price - bids[0].price : 0.01;
-  // Mid-price positioned directly in the center price column matching price level alignment, with no "MID:" label
   html += `
     <div class="my-1.5 grid grid-cols-3 items-center py-1 bg-slate-900/90 border-y border-cyan-500/30 text-[10px] px-1 font-mono">
       <span class="text-slate-400 text-left pl-1">SPR: ${f(spread, d)}</span>
@@ -226,20 +212,26 @@ async function refresh() {
   const s = st.sym, [b, t, p, u] = await Promise.all([safe(P.getBook(s)), safe(P.getTape(s)), safe(P.getProbabilities(s)), safe(P.getStatus())]);
   if (s === st.sym) { drawBook(b); drawTape(t); drawProbs(p); drawStatus(u); }
 }
-function setSym(s) { st.sym = s.toUpperCase(); $("#q").value = st.sym; drawMovers(); loadBars(); refresh(); }
+
+function setSym(s) { 
+  st.sym = s.toUpperCase(); 
+  $("#q").value = st.sym; 
+  drawMovers(); 
+  renderTVChart(st.sym, st.tf); 
+  refresh(); 
+}
 
 async function init() {
-  initChart();
+  renderTVChart(st.sym, st.tf);
   const all = a => document.querySelectorAll(a);
   all("[data-tab]").forEach(b => b.onclick = () => { st.tab = b.dataset.tab; all("[data-tab]").forEach(x => x.classList.toggle("on", x === b)); drawMovers(); });
-  all("[data-tf]").forEach(b => b.onclick = () => { st.tf = b.dataset.tf; all("[data-tf]").forEach(x => x.classList.toggle("on", x === b)); loadBars(); });
-  all("[data-ind]").forEach(b => b.onclick = () => { const k = b.dataset.ind; st[k] = !st[k]; b.classList.toggle("on", st[k]); b.setAttribute("aria-pressed", st[k]); applyInd(); });
+  all("[data-tf]").forEach(b => b.onclick = () => { st.tf = b.dataset.tf; all("[data-tf]").forEach(x => x.classList.toggle("on", x === b)); renderTVChart(st.sym, st.tf); });
   $("#qf").onsubmit = e => { e.preventDefault(); const v = $("#q").value.trim(); if (v) setSym(v); };
   const pick = e => { const r = e.target.closest("tr"); if (r && (e.type === "click" || e.key === "Enter")) setSym(r.dataset.s); };
   $("#movers").onclick = pick; $("#movers").onkeydown = pick;
   sess(); setInterval(sess, 6e4);
   movers = (await safe(P.getMovers())) || []; drawMovers();
-  await loadBars(); refresh(); setInterval(refresh, 2000);
+  refresh(); setInterval(refresh, 2000);
 }
 return {init, setSym, P};
 })();

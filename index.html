@@ -1,3 +1,4 @@
+<!-- Author: Scottie Dunnavan -->
 <!doctype html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -9,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['"JetBrains Mono"','monospace']}}}}</script>
-<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://s3.tradingview.com/tv.js"></script>
 <style>
 body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hidden}
 .mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
@@ -80,11 +81,13 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       <!-- Chart Panel -->
       <div class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pb-2 border-b border-slate-800/80">
-          <span id="csym" class="mono font-semibold text-sm text-cyan-400"></span><span id="ohlc" class="mono text-[11px] text-slate-400"></span>
-          <div class="ml-auto flex gap-1" role="group" aria-label="Indicators"><button class="btn on" data-ind="vwap" aria-pressed="true">VWAP</button><button class="btn on" data-ind="e9" aria-pressed="true">EMA 9</button><button class="btn" data-ind="e20" aria-pressed="false">EMA 20</button></div>
+          <span id="csym" class="mono font-semibold text-sm text-cyan-400"></span>
+          <span id="ohlc" class="mono text-[11px] text-slate-400">TradingView Advanced Real-Time Chart</span>
         </div>
-        <div class="relative h-[420px] mt-1"><div id="chart" class="absolute inset-0"></div><canvas id="vp" class="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true"></canvas></div>
-        <p class="px-1 pt-1 text-[10px] text-slate-500 border-t border-slate-800/50 mt-auto">Chart powered by <a class="underline hover:text-slate-400" href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView Lightweight Charts™</a></p>
+        <div class="relative h-[420px] mt-1 w-full overflow-hidden rounded">
+          <div id="tradingview_chart" class="w-full h-full"></div>
+        </div>
+        <p class="px-1 pt-1 text-[10px] text-slate-500 border-t border-slate-800/50 mt-auto">Chart powered by <a class="underline hover:text-slate-400" href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView Advanced Real-Time Chart™</a></p>
       </div>
 
       <!-- Level 2 DOM & Tape Panel -->
