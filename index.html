@@ -66,15 +66,15 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       <form id="qf" class="flex"><label for="q" class="sr-only">Symbol</label><input id="q" value="ONEG" autocomplete="off" class="mono w-28 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm uppercase text-slate-100"><button class="btn ml-1 hover:bg-slate-800">Go</button></form>
       <span id="sess" class="btn !text-cyan-400 font-mono" title="US equity session"></span>
       <div role="group" aria-label="Timeframe" class="flex gap-1 ml-auto">
-        <button class="btn" data-tf="1m">1m</button><button class="btn on" data-tf="5m">5m</button><button class="btn" data-tf="15m">15m</button><button class="btn" data-tf="1D">1D</button>
+        <button class="btn on" data-tf="1m">1m</button><button class="btn" data-tf="5m">5m</button><button class="btn" data-tf="15m">15m</button><button class="btn" data-tf="1D">1D</button>
       </div>
     </div>
 
-    <div class="grid grid-cols-12 gap-3">
-      <!-- Live TradingView Market Movers Panel -->
+    <div class="grid grid-cols-12 gap-3 items-stretch">
+      <!-- Live TradingView Market Movers Panel (Expanded Height & Gainers Default) -->
       <div class="card col-span-12 lg:col-span-3 flex flex-col p-2">
         <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 mb-2">Live Market Movers</h2>
-        <div class="h-[440px] w-full overflow-hidden rounded">
+        <div class="h-[600px] w-full overflow-hidden rounded">
           <!-- TradingView Hotlists Widget BEGIN -->
           <div class="tradingview-widget-container" style="height:100%;width:100%">
             <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
@@ -87,6 +87,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
               "locale": "en",
               "width": "100%",
               "height": "100%",
+              "defaultScreen": "change_gainers",
               "plotLineColorGrowing": "rgba(16, 185, 129, 1)",
               "plotLineColorFalling": "rgba(244, 63, 94, 1)",
               "gridLineColor": "rgba(30, 41, 59, 1)",
@@ -101,21 +102,21 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
         </div>
       </div>
 
-      <!-- Chart Panel -->
+      <!-- Chart Panel (Expanded Height & 1m Default) -->
       <div class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pb-2 border-b border-slate-800/80">
-          <span id="csym" class="mono font-semibold text-sm text-cyan-400">NASDAQ:AAPL · 5m</span>
+          <span id="csym" class="mono font-semibold text-sm text-cyan-400">ONEG · 1m</span>
           <span id="ohlc" class="mono text-[11px] text-slate-400">TradingView Advanced Real-Time Chart</span>
         </div>
-        <div class="relative h-[420px] mt-1 w-full overflow-hidden rounded">
+        <div class="relative h-[600px] mt-1 w-full overflow-hidden rounded">
           <div id="tradingview_chart" class="w-full h-full"></div>
         </div>
         <p class="px-1 pt-1 text-[10px] text-slate-500 border-t border-slate-800/50 mt-auto">Chart powered by <a class="underline hover:text-slate-400" href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView Advanced Real-Time Chart™</a></p>
       </div>
 
       <!-- Level 2 DOM & Tape Panel -->
-      <div class="col-span-12 lg:col-span-3 space-y-3">
-        <div class="card p-2">
+      <div class="col-span-12 lg:col-span-3 space-y-3 flex flex-col justify-between">
+        <div class="card p-2 flex-1">
           <div class="flex items-center justify-between px-1 pb-1 border-b border-slate-800">
             <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Level 2 DOM Ladder</h2>
             <span class="text-[10px] text-cyan-400 font-mono">100ms Grid</span>
@@ -131,16 +132,18 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     </div>
   </section>
 
-  <!-- Live TradingView Stock Screener Widget Panel -->
+  <!-- Live TradingView Stock Screener Panel (5 Rows Capped + Soft Locked Overlay) -->
   <section id="screener-section" class="max-w-[1440px] mx-auto px-4 pb-14">
-    <div class="card p-3">
+    <div class="card p-3 relative overflow-hidden">
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
         <div class="flex items-center gap-2">
           <h2 class="text-sm font-bold uppercase tracking-wider text-slate-200">Live US Market Screener</h2>
           <span class="text-[10px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-800 px-2 py-0.5 rounded">Real-Time Feed</span>
         </div>
+        <span class="text-xs font-mono text-amber-400 bg-amber-950/40 border border-amber-800/50 px-2 py-0.5 rounded">Preview Mode · Restricted Stream</span>
       </div>
-      <div class="mt-3 h-[500px] w-full">
+      
+      <div class="relative mt-3 h-[220px] w-full overflow-hidden rounded">
         <!-- TradingView Stock Screener Widget BEGIN -->
         <div class="tradingview-widget-container" style="height:100%;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
@@ -151,13 +154,23 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
             "defaultColumn": "overview",
             "defaultScreen": "most_capitalized",
             "market": "us",
-            "showToolbar": true,
+            "showToolbar": false,
             "colorTheme": "dark",
             "locale": "en"
           }
           </script>
         </div>
         <!-- TradingView Stock Screener Widget END -->
+
+        <!-- Soft Blurred / Locked Overlay Layer -->
+        <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px] flex flex-col items-center justify-center text-center p-4">
+          <div class="bg-slate-900/90 border border-cyan-500/40 p-5 rounded-lg shadow-2xl max-w-md">
+            <svg class="mx-auto h-6 w-6 text-cyan-400 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+            <h3 class="text-sm font-bold text-slate-100 uppercase tracking-wider">Custom Screener Engine Locked</h3>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">Full multi-venue order book screening & custom quantitative filter channels require authenticated operator credentials.</p>
+            <a href="login.html" class="btn !text-cyan-400 !border-cyan-500/40 mt-3 inline-block font-mono">Unlock Full Scanner Access</a>
+          </div>
+        </div>
       </div>
     </div>
   </section>
