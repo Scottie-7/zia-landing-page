@@ -33,25 +33,9 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 
 <div class="relative z-10 flex flex-col min-h-screen">
 <header class="sticky top-0 z-50 border-b border-slate-800 bg-[#080C14]/90 backdrop-blur">
-  <div class="max-w-[1440px] mx-auto px-4 h-20 flex items-center justify-between gap-6">
-    <!-- Far Left: Zia Quant Fund Name on Top, Glowing Logo Underneath -->
-    <div class="flex flex-col items-center flex-shrink-0">
-      <a href="#top" class="font-mono font-bold tracking-tight text-cyan-400 text-sm whitespace-nowrap drop-shadow-[0_0_10px_rgba(0,240,255,0.6)] mb-1">Zia Quant Fund</a>
-      <div class="w-8 h-8 rounded-md bg-slate-950 border border-cyan-500/60 flex items-center justify-center overflow-hidden shadow-[0_0_12px_rgba(0,240,255,0.7)] p-0.5">
-        <!-- Inline Vector Graphic of Zia Sun + Eye of Horus + Ruby Center -->
-        <svg viewBox="0 0 100 100" class="w-full h-full text-cyan-400 drop-shadow-[0_0_6px_rgba(0,240,255,0.9)]" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M44 4v18 M50 4v18 M56 4v18" />
-          <path d="M44 78v18 M50 78v18 M56 78v18" />
-          <path d="M4 44h18 M4 50h18 M4 56h18" />
-          <path d="M78 44h18 M78 50h18 M78 56h18" />
-          <circle cx="50" cy="50" r="26" stroke-width="3" fill="#080C14"/>
-          <path d="M28 50 C38 38 62 38 72 50 C62 62 38 62 28 50 Z" stroke-width="2.5" fill="#080C14"/>
-          <path d="M38 53 L32 66" stroke-width="2" />
-          <path d="M62 53 C62 60 56 65 50 65" stroke-width="2" />
-          <circle cx="50" cy="50" r="7" fill="#f43f5e" stroke="#fb7185" stroke-width="1.5"/>
-        </svg>
-      </div>
-    </div>
+  <div class="max-w-[1440px] mx-auto px-4 h-16 flex items-center justify-between gap-6">
+    <!-- Clean Left Brand Title for Navbar -->
+    <a href="#top" class="font-mono font-bold tracking-tight text-cyan-400 text-base drop-shadow-[0_0_10px_rgba(0,240,255,0.6)]">Zia Quant Fund</a>
 
     <!-- Center: Navigation Tabs -->
     <nav aria-label="Primary" class="hidden md:flex gap-6 text-sm text-slate-400 font-medium">
@@ -72,7 +56,25 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 </header>
 
 <main id="top" class="flex-grow">
-  <section class="max-w-4xl mx-auto px-4 pt-16 pb-12 text-center">
+  <section class="max-w-4xl mx-auto px-4 pt-12 pb-12 text-center">
+    <!-- Prominent Logo & Title Showcase Below the Navbar Line -->
+    <div class="flex flex-col items-center justify-center mb-8">
+      <div class="w-20 h-20 rounded-xl bg-slate-950 border-2 border-cyan-500/80 flex items-center justify-center overflow-hidden shadow-[0_0_25px_rgba(0,240,255,0.8)] p-2 mb-3">
+        <svg viewBox="0 0 100 100" class="w-full h-full text-cyan-400 drop-shadow-[0_0_10px_rgba(0,240,255,0.9)]" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M44 4v18 M50 4v18 M56 4v18" />
+          <path d="M44 78v18 M50 78v18 M56 78v18" />
+          <path d="M4 44h18 M4 50h18 M4 56h18" />
+          <path d="M78 44h18 M78 50h18 M78 56h18" />
+          <circle cx="50" cy="50" r="26" stroke-width="3" fill="#080C14"/>
+          <path d="M28 50 C38 38 62 38 72 50 C62 62 38 62 28 50 Z" stroke-width="2.5" fill="#080C14"/>
+          <path d="M38 53 L32 66" stroke-width="2" />
+          <path d="M62 53 C62 60 56 65 50 65" stroke-width="2" />
+          <circle cx="50" cy="50" r="7" fill="#f43f5e" stroke="#fb7185" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <h2 class="font-mono font-bold tracking-tight text-cyan-400 text-2xl md:text-3xl drop-shadow-[0_0_15px_rgba(0,240,255,0.7)]">Zia Quant Fund</h2>
+    </div>
+
     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-xs font-mono mb-4">
       <span>Sonar v1.2: Machine Learning Engine</span>
     </div>
