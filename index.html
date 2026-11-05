@@ -38,6 +38,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     <nav aria-label="Primary" class="hidden md:flex gap-6 text-sm text-slate-400 font-medium">
       <a class="hover:text-cyan-400 transition" href="#platform">Platform</a>
       <a class="hover:text-cyan-400 transition" href="#preview">Terminal Preview</a>
+      <a class="hover:text-cyan-400 transition" href="#ai-stream">AI Alpha Stream</a>
       <a class="hover:text-cyan-400 transition" href="#screener-section">Live Screener</a>
       <a class="hover:text-cyan-400 transition" href="#architecture">Microstructure Architecture</a>
       <a class="hover:text-cyan-400 transition" href="#models">Model Suite</a>
@@ -128,6 +129,73 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
           </div>
         </div>
         <div class="card p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Time & Sales</h2><div id="tape" class="mono mt-1 px-1 text-[11px] leading-[18px]"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Advanced AI Alpha & Probability Streaming Panel -->
+  <section id="ai-stream" class="max-w-[1440px] mx-auto px-4 pb-6">
+    <div class="card p-4 relative overflow-hidden bg-slate-900/80 border-cyan-500/30">
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-100">180-Second AI Alpha Stream & Order-Book Microstructure Telemetry</h2>
+          <span class="text-[10px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-800 px-2 py-0.5 rounded">Multi-Agent Neural Orchestration</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-mono text-cyan-400 bg-cyan-950/40 border border-cyan-800/50 px-2.5 py-1 rounded flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span> Client-Tailored Risk Weights: Active
+          </span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-4 mt-4 items-center">
+        <!-- Left: Competing Model Probabilities Breakdown -->
+        <div class="col-span-12 md:col-span-5 space-y-3 bg-slate-950/70 p-4 rounded border border-slate-800">
+          <div class="text-xs font-semibold text-slate-300 uppercase tracking-wide flex justify-between">
+            <span>Model Confidence Matrix</span>
+            <span class="text-cyan-400 font-mono">τ = 180s Horizon</span>
+          </div>
+          <!-- Model 1 -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-slate-400"><span>Order-Book Micro (DeepLOB CNN)</span><span class="text-emerald-400 font-mono">74.2% Conf</span></div>
+            <div class="h-2 rounded bg-slate-800 overflow-hidden"><div class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-2 rounded" style="width: 74.2%"></div></div>
+          </div>
+          <!-- Model 2 -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-slate-400"><span>Sequence Macro (LSTM-Attention)</span><span class="text-cyan-400 font-mono">68.5% Conf</span></div>
+            <div class="h-2 rounded bg-slate-800 overflow-hidden"><div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded" style="width: 68.5%"></div></div>
+          </div>
+          <!-- Model 3 -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-slate-400"><span>Baseline Ensemble (XGBoost/RF)</span><span class="text-amber-400 font-mono">61.0% Conf</span></div>
+            <div class="h-2 rounded bg-slate-800 overflow-hidden"><div class="bg-gradient-to-r from-amber-500 to-rose-500 h-2 rounded" style="width: 61.0%"></div></div>
+          </div>
+        </div>
+
+        <!-- Center: Simulated Live Decision Stream / Signal Ticker -->
+        <div class="col-span-12 md:col-span-4 bg-slate-950/90 p-4 rounded border border-slate-800 font-mono text-xs space-y-2">
+          <div class="text-slate-400 text-[10px] uppercase tracking-wider border-b border-slate-800 pb-1 flex justify-between">
+            <span>Real-Time Inference Log</span>
+            <span class="text-emerald-400">● Streaming</span>
+          </div>
+          <div class="space-y-1.5 text-[11px] leading-relaxed">
+            <div class="text-emerald-400">[17:58:12] AIR_v ≥ 1.2 · Iceberg detected on ONEG ask wall. P(Up) jump to 78%</div>
+            <div class="text-slate-300">[17:58:10] MLOFI imbalance index positive across 10-level Nasdaq feed.</div>
+            <div class="text-amber-400">[17:58:07] Spread-adjusted triple barrier target locked (τ=180s).</div>
+          </div>
+        </div>
+
+        <!-- Right: Actionable Risk Profile & Sync State -->
+        <div class="col-span-12 md:col-span-3 bg-gradient-to-br from-cyan-950/30 to-slate-900/90 p-4 rounded border border-cyan-500/30 flex flex-col justify-between text-center h-full">
+          <div>
+            <span class="inline-block p-2 rounded-full bg-cyan-500/10 text-cyan-400 mb-1">
+              <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </span>
+            <h3 class="text-xs font-bold text-slate-100">Custom Neural Weights</h3>
+            <p class="text-[11px] text-slate-400 mt-1">Tailored decision probabilities mapped to individual risk habits.</p>
+          </div>
+          <a href="login.html" class="btn !text-cyan-400 !border-cyan-500/40 mt-3 block font-mono text-center">Sync Client Weights</a>
+        </div>
       </div>
     </div>
   </section>
