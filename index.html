@@ -34,18 +34,18 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 <div class="relative z-10 flex flex-col min-h-screen">
 <header class="sticky top-0 z-50 border-b border-slate-800 bg-[#080C14]/90 backdrop-blur">
   <div class="max-w-[1440px] mx-auto px-4 h-16 flex items-center justify-between gap-6">
-    <!-- Clean Left Brand Title for Navbar -->
-    <a href="#top" class="font-mono font-bold tracking-tight text-cyan-400 text-base drop-shadow-[0_0_10px_rgba(0,240,255,0.6)]">Zia Quant Fund</a>
-
-    <!-- Center: Navigation Tabs -->
-    <nav aria-label="Primary" class="hidden md:flex gap-6 text-sm text-slate-400 font-medium">
-      <a class="hover:text-cyan-400 transition" href="#platform">Platform</a>
-      <a class="hover:text-cyan-400 transition" href="#preview">Terminal Preview</a>
-      <a class="hover:text-cyan-400 transition" href="#ai-stream">AI Alpha Stream</a>
-      <a class="hover:text-cyan-400 transition" href="#screener-section">Live Screener</a>
-      <a class="hover:text-cyan-400 transition" href="#architecture">Microstructure Architecture</a>
-      <a class="hover:text-cyan-400 transition" href="#models">Model Suite</a>
-    </nav>
+    <!-- Navigation Left: Zia Quant Fund Title moved right next to Platform tab -->
+    <div class="flex items-center gap-6">
+      <a href="#top" class="font-mono font-bold tracking-tight text-cyan-400 text-base drop-shadow-[0_0_10px_rgba(0,240,255,0.6)]">Zia Quant Fund</a>
+      <nav aria-label="Primary" class="hidden md:flex gap-6 text-sm text-slate-400 font-medium">
+        <a class="hover:text-cyan-400 transition" href="#platform">Platform</a>
+        <a class="hover:text-cyan-400 transition" href="#preview">Terminal Preview</a>
+        <a class="hover:text-cyan-400 transition" href="#ai-stream">AI Alpha Stream</a>
+        <a class="hover:text-cyan-400 transition" href="#screener-section">Live Screener</a>
+        <a class="hover:text-cyan-400 transition" href="#architecture">Microstructure Architecture</a>
+        <a class="hover:text-cyan-400 transition" href="#models">Model Suite</a>
+      </nav>
+    </div>
 
     <!-- Right: Status & Login -->
     <div class="flex items-center gap-4">
@@ -57,7 +57,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 
 <main id="top" class="flex-grow">
   <section class="max-w-4xl mx-auto px-4 pt-12 pb-12 text-center">
-    <!-- Prominent Logo & Title Showcase Below the Navbar Line -->
+    <!-- Approved Central Logo & Title Showcase -->
     <div class="flex flex-col items-center justify-center mb-8">
       <div class="w-20 h-20 rounded-xl bg-slate-950 border-2 border-cyan-500/80 flex items-center justify-center overflow-hidden shadow-[0_0_25px_rgba(0,240,255,0.8)] p-2 mb-3">
         <svg viewBox="0 0 100 100" class="w-full h-full text-cyan-400 drop-shadow-[0_0_10px_rgba(0,240,255,0.9)]" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
