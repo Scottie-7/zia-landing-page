@@ -34,17 +34,13 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 <div class="relative z-10 flex flex-col min-h-screen">
 <header class="sticky top-0 z-50 border-b border-slate-800 bg-[#080C14]/90 backdrop-blur">
   <div class="max-w-[1440px] mx-auto px-4 h-16 flex items-center justify-between gap-6">
-    <!-- Left: Brand Logo & Title -->
+    <!-- Far Left: Brand Logo & Title -->
     <div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-md bg-slate-900 border border-cyan-500/40 flex items-center justify-center overflow-hidden shadow-[0_0_12px_rgba(0,240,255,0.3)] flex-shrink-0">
-        <!-- Temporary placeholder utilizing dark-mode logo structure -->
-        <svg viewBox="0 0 100 100" class="w-full h-full text-cyan-400 p-1" fill="currentColor">
-          <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="4"/>
-          <circle cx="50" cy="50" r="10" fill="#f43f5e"/>
-          <path d="M50 8v84M8 50h84" stroke="currentColor" stroke-width="4"/>
-        </svg>
+      <div class="w-10 h-10 rounded-lg bg-slate-950 border border-cyan-500/60 flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(0,240,255,0.7)] flex-shrink-0">
+        <!-- Place your dark-mode logo file as 'logo-dark.jpg' in your root directory -->
+        <img src="logo-dark.jpg" alt="Zia Quant Fund Logo" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'40\' fill=\'%23080c14\' stroke=\'%2300f0ff\' stroke-width=\'6\'/><circle cx=\'50\' cy=\'50\' r=\'12\' fill=\'%23f43f5e\'/></svg>';">
       </div>
-      <a href="#top" class="font-mono font-bold tracking-tight text-cyan-400 text-lg drop-shadow-[0_0_10px_rgba(0,240,255,0.6)]">Zia Quant Fund</a>
+      <a href="#top" class="font-mono font-bold tracking-tight text-cyan-400 text-xl drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]">Zia Quant Fund</a>
     </div>
 
     <!-- Center: Navigation Tabs -->
@@ -68,10 +64,10 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 <main id="top" class="flex-grow">
   <section class="max-w-4xl mx-auto px-4 pt-16 pb-12 text-center">
     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-xs font-mono mb-4">
-      <span>Sonar Engine v1.2</span> · <span>Institutional Machine Learning Intelligence</span>
+      <span>Sonar v1.2: Machine Learning Engine</span>
     </div>
-    <h1 class="text-4xl md:text-5xl font-bold tracking-tight leading-tight">Institutional Machine Learning Models Engineered For Your Strategy</h1>
-    <p class="mt-5 text-slate-400 text-base md:text-lg max-w-3xl mx-auto leading-relaxed">Deploy custom deep learning trading models tailored precisely to your account size and risk profile. Utilizing real-time L2/L3 order-book microstructure telemetry and multi-venue analytics to automate highest-probability trade execution.</p>
+    <h1 class="text-4xl md:text-5xl font-bold tracking-tight leading-tight">Machine Learning Models Engineered For Your Trading Strategies</h1>
+    <p class="mt-5 text-slate-400 text-base md:text-lg max-w-3xl mx-auto leading-relaxed">Deploy institutional-grade deep learning models fine-tuned to your individual trading strategy, risk profile, and capital allocation. Harnessing multi-venue Level 1 & Level 2 order-book microstructure at 100ms resolution to engineer automated high-probability long, short, and hedging setups.</p>
     <div class="mt-8 flex justify-center gap-3">
       <a href="login.html" class="rounded-md bg-cyan-500 px-5 py-2.5 font-semibold text-slate-950 hover:bg-cyan-400 transition">Launch Terminal</a>
       <a href="#architecture" class="rounded-md border border-slate-700 px-5 py-2.5 font-semibold text-slate-300 hover:bg-slate-800 transition">View Architecture</a>
@@ -289,9 +285,9 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 </main>
 
 <footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-400 space-y-1.5">
-  <p class="font-medium text-slate-300">Developer: Scottie Dunnavan</p>
+  <p class="font-medium text-slate-300">Developed By: Enochian Grove</p>
   <p>© 2026 Zia Quant Fund. All rights reserved.</p>
-  <p class="text-slate-500">Quantitative research platform. Advisory research and paper trading demonstration portal only.</p>
+  <p class="text-slate-500">Quantitative research & discord platform, not financial advice.</p>
   <p class="text-slate-500 font-mono">Infrastructure: Ubuntu Server 24.04 LTS · Cloudflare Tunnel Route</p>
 </footer>
 </div>
