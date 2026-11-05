@@ -1,6 +1,6 @@
 /**
  * Author: Scottie Dunnavan
- * Sonar UI: Data layer + Panel renderers + TradingView Advanced Chart Integration.
+ * Sonar UI: Data layer + Panel renderers + TradingView Advanced Chart Integration + Screener Engine.
  */
 const Sonar = (() => {
 const API_BASE = "";
@@ -25,6 +25,18 @@ const SYMS = {
   KLNR: ["Kilner Robotics", 5.32, 22.4], VRTA: ["Verta Minerals", 3.07, 12.9], TRBO: ["Turbo Marine", 0.62, 7.2],
   NOVA: ["Novara Labs", 4.4, -9.6], PLZN: ["Plaz Networks", 1.74, -18.3]
 };
+
+const SCREENER_DATA = [
+  { symbol: "ONEG", price: 2.41, pct: 108.15, vol: 14200000, rvol: 8.4, float: 2.8, mcap: 18.5, cat: "FDA Phase 2", low: 1.12, high: 2.65 },
+  { symbol: "CHOW", price: 1.18, pct: 64.20, vol: 8900000, rvol: 5.2, float: 4.1, mcap: 12.2, cat: "Earnings Surge", low: 0.70, high: 1.25 },
+  { symbol: "SGRX", price: 0.86, pct: 41.70, vol: 6400000, rvol: 3.8, float: 1.9, mcap: 8.4, cat: "Contract Win", low: 0.60, high: 0.94 },
+  { symbol: "KLNR", price: 5.32, pct: 22.40, vol: 3200000, rvol: 2.6, float: 8.5, mcap: 45.1, cat: "Patents Granted", low: 4.30, high: 5.60 },
+  { symbol: "VRTA", price: 3.07, pct: 12.90, vol: 2100000, rvol: 1.8, float: 6.2, mcap: 28.0, cat: "PR Momentum", low: 2.70, high: 3.15 },
+  { symbol: "TRBO", price: 0.62, pct: 7.20, vol: 1500000, rvol: 1.4, float: 3.4, mcap: 5.1, cat: "Volume Spike", low: 0.57, high: 0.65 },
+  { symbol: "NOVA", price: 4.40, pct: -9.60, vol: 1800000, rvol: 2.1, float: 12.0, mcap: 52.8, cat: "Offering", low: 4.20, high: 4.90 },
+  { symbol: "PLZN", price: 1.74, pct: -18.30, vol: 4100000, rvol: 4.5, float: 5.8, mcap: 15.6, cat: "Downgrade", low: 1.68, high: 2.20 }
+];
+
 const base = s => SYMS[s] || ["Sample " + s, 1 + (hash(s) % 700) / 100, (hash(s) % 40) - 12];
 
 const S = {
@@ -75,14 +87,13 @@ const P = {
 };
 
 // ---------- RENDERERS ----------
-const st = {sym: "ONEG", tf: "5m", tab: "gainers"};
+const st = {sym: "ONEG", tf: "5m", tab: "gainers", screenerFilter: "all"};
 let movers = [];
 
 function renderTVChart(symbol, tf) {
   const container = $("#tradingview_chart");
   if (!container) return;
 
-  // Wait for TradingView script to load asynchronously to avoid race conditions
   if (typeof TradingView === "undefined") {
     setTimeout(() => renderTVChart(symbol, tf), 100);
     return;
@@ -130,6 +141,33 @@ function drawMovers() {
     <td class="py-1.5 pl-2"><div class="font-semibold text-slate-200">${m.symbol}${m.pct_change >= 5 && m.rvol >= 2 ? ' <span class="t2" title="Meets Tier 2 rule">T2</span>' : ""}</div><div class="truncate max-w-[90px] text-[10px] text-slate-400">${m.name}</div></td>
     <td class="text-right text-slate-300">${f(m.price, dp(m.price))}</td><td class="text-right ${m.pct_change >= 0 ? "text-emerald-400" : "text-rose-400"}">${m.pct_change >= 0 ? "+" : ""}${f(m.pct_change)}%</td>
     <td class="text-right text-slate-400">${cmp.format(m.volume)}</td><td class="text-right pr-2 text-slate-400">${m.rvol.toFixed(1)}</td></tr>`).join("");
+}
+
+function drawScreener() {
+  const tbody = $("#screener-tbody");
+  if (!tbody) return;
+
+  let filtered = SCREENER_DATA;
+  if (st.screenerFilter === "low-float") filtered = SCREENER_DATA.filter(x => x.float < 5.0);
+  else if (st.screenerFilter === "high-rvol") filtered = SCREENER_DATA.filter(x => x.rvol >= 3.0);
+  else if (st.screenerFilter === "micro-cap") filtered = SCREENER_DATA.filter(x => x.price < 5.0);
+
+  tbody.innerHTML = filtered.map(row => `
+    <tr data-s="${row.symbol}" class="hover:bg-slate-800/60 cursor-pointer transition-colors ${row.symbol === st.sym ? "bg-slate-800/80" : ""}">
+      <td class="py-2 px-2 font-bold text-slate-100 flex items-center gap-1.5">
+        <span class="text-cyan-400">${row.symbol}</span>
+        ${row.float < 3.0 ? '<span class="text-[9px] bg-rose-950 text-rose-400 border border-rose-800 px-1 rounded">MICRO FLOAT</span>' : ''}
+      </td>
+      <td class="text-right py-2 px-2 text-slate-200">${f(row.price, dp(row.price))}</td>
+      <td class="text-right py-2 px-2 font-bold ${row.pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${row.pct >= 0 ? '+' : ''}${f(row.pct)}%</td>
+      <td class="text-right py-2 px-2 text-slate-300">${cmp.format(row.vol)}</td>
+      <td class="text-right py-2 px-2 font-semibold ${row.rvol >= 3.0 ? 'text-cyan-400' : 'text-slate-300'}">${row.rvol.toFixed(1)}x</td>
+      <td class="text-right py-2 px-2 text-slate-300">${row.float}M</td>
+      <td class="text-right py-2 px-2 text-slate-300">$${row.mcap}M</td>
+      <td class="text-center py-2 px-2"><span class="bg-slate-800 text-slate-300 text-[10px] px-2 py-0.5 rounded border border-slate-700">${row.cat}</span></td>
+      <td class="text-right py-2 px-2 text-slate-400 text-[11px]">${f(row.low, dp(row.low))} - ${f(row.high, dp(row.high))}</td>
+    </tr>
+  `).join("");
 }
 
 function drawBook(b) {
@@ -239,6 +277,7 @@ function setSym(s) {
   const qEl = $("#q");
   if (qEl) qEl.value = st.sym; 
   drawMovers(); 
+  drawScreener();
   renderTVChart(st.sym, st.tf); 
   refresh(); 
 }
@@ -248,15 +287,29 @@ async function init() {
   const all = a => document.querySelectorAll(a);
   all("[data-tab]").forEach(b => b.onclick = () => { st.tab = b.dataset.tab; all("[data-tab]").forEach(x => x.classList.toggle("on", x === b)); drawMovers(); });
   all("[data-tf]").forEach(b => b.onclick = () => { st.tf = b.dataset.tf; all("[data-tf]").forEach(x => x.classList.toggle("on", x === b)); renderTVChart(st.sym, st.tf); });
+  
+  // Screener Filter Event Binding
+  const screenerFilters = document.querySelectorAll("#screener-filters [data-filter]");
+  screenerFilters.forEach(b => b.onclick = () => {
+    st.screenerFilter = b.dataset.filter;
+    screenerFilters.forEach(x => x.classList.toggle("on", x === b));
+    drawScreener();
+  });
+
   const qfEl = $("#qf");
   if (qfEl) qfEl.onsubmit = e => { e.preventDefault(); const v = $("#q").value.trim(); if (v) setSym(v); };
+  
+  const pick = e => { const r = e.target.closest("tr"); if (r && (e.type === "click" || e.key === "Enter")) setSym(r.dataset.s); };
   const moversEl = $("#movers");
-  if (moversEl) {
-    const pick = e => { const r = e.target.closest("tr"); if (r && (e.type === "click" || e.key === "Enter")) setSym(r.dataset.s); };
-    moversEl.onclick = pick; moversEl.onkeydown = pick;
-  }
+  if (moversEl) { moversEl.onclick = pick; moversEl.onkeydown = pick; }
+  
+  const screenerEl = $("#screener-tbody");
+  if (screenerEl) { screenerEl.onclick = pick; screenerEl.onkeydown = pick; }
+
   sess(); setInterval(sess, 6e4);
-  movers = (await safe(P.getMovers())) || []; drawMovers();
+  movers = (await safe(P.getMovers())) || []; 
+  drawMovers();
+  drawScreener();
   refresh(); setInterval(refresh, 2000);
 }
 return {init, setSym, P};
