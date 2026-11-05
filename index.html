@@ -71,18 +71,40 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     </div>
 
     <div class="grid grid-cols-12 gap-3">
-      <!-- Market Movers Panel -->
-      <div class="card col-span-12 lg:col-span-3 flex flex-col">
-        <div role="group" aria-label="Movers view" class="flex gap-1 p-2 border-b border-slate-800"><button class="btn on" data-tab="gainers">Gainers</button><button class="btn" data-tab="losers">Losers</button><button class="btn" data-tab="active">Most Active</button></div>
-        <div class="overflow-auto max-h-[460px]">
-          <table class="mono w-full text-xs"><thead class="text-slate-400 bg-slate-900/50 sticky top-0"><tr><th class="text-left font-normal pl-2 py-1.5">Symbol</th><th class="text-right font-normal py-1.5">Price</th><th class="text-right font-normal py-1.5">Chg</th><th class="text-right font-normal py-1.5">Vol</th><th class="text-right font-normal pr-2 py-1.5">RVOL</th></tr></thead><tbody id="movers"></tbody></table>
+      <!-- Live TradingView Market Movers Panel -->
+      <div class="card col-span-12 lg:col-span-3 flex flex-col p-2">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 mb-2">Live Market Movers</h2>
+        <div class="h-[440px] w-full overflow-hidden rounded">
+          <!-- TradingView Hotlists Widget BEGIN -->
+          <div class="tradingview-widget-container" style="height:100%;width:100%">
+            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-hotlists.js" async>
+            {
+              "colorTheme": "dark",
+              "dateRange": "12M",
+              "exchange": "US",
+              "showChart": true,
+              "locale": "en",
+              "width": "100%",
+              "height": "100%",
+              "plotLineColorGrowing": "rgba(16, 185, 129, 1)",
+              "plotLineColorFalling": "rgba(244, 63, 94, 1)",
+              "gridLineColor": "rgba(30, 41, 59, 1)",
+              "scaleFontColor": "rgba(148, 163, 184, 1)",
+              "belowLineFillColorGrowing": "rgba(16, 185, 129, 0.12)",
+              "belowLineFillColorFalling": "rgba(244, 63, 94, 0.12)",
+              "symbolClearColor": "rgba(255, 255, 255, 1)"
+            }
+            </script>
+          </div>
+          <!-- TradingView Hotlists Widget END -->
         </div>
       </div>
 
       <!-- Chart Panel -->
       <div class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pb-2 border-b border-slate-800/80">
-          <span id="csym" class="mono font-semibold text-sm text-cyan-400">ONEG · 5m</span>
+          <span id="csym" class="mono font-semibold text-sm text-cyan-400">NASDAQ:AAPL · 5m</span>
           <span id="ohlc" class="mono text-[11px] text-slate-400">TradingView Advanced Real-Time Chart</span>
         </div>
         <div class="relative h-[420px] mt-1 w-full overflow-hidden rounded">
@@ -109,73 +131,34 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     </div>
   </section>
 
-  <!-- High-Density Market Screener Panel -->
+  <!-- Live TradingView Stock Screener Widget Panel -->
   <section id="screener-section" class="max-w-[1440px] mx-auto px-4 pb-14">
     <div class="card p-3">
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
         <div class="flex items-center gap-2">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-200">Small-Cap Quantitative Screener</h2>
-          <span class="text-[10px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-800 px-2 py-0.5 rounded">Low-Float Momentum Scanner</span>
-        </div>
-        <div role="group" aria-label="Screener Filter Presets" class="flex gap-1" id="screener-filters">
-          <button class="btn on" data-filter="all">All Setups</button>
-          <button class="btn" data-filter="low-float">Float < 10M</button>
-          <button class="btn" data-filter="high-rvol">RVOL > 3.0x</button>
-          <button class="btn" data-filter="micro-cap">Micro < $5</button>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-200">Live US Market Screener</h2>
+          <span class="text-[10px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-800 px-2 py-0.5 rounded">Real-Time Feed</span>
         </div>
       </div>
-
-      <div class="grid grid-cols-12 gap-3 mt-3">
-        <!-- Main Scanner Data Grid -->
-        <div class="col-span-12 lg:col-span-9 overflow-x-auto">
-          <table class="mono w-full text-xs">
-            <thead class="text-slate-400 bg-slate-900/80 border-b border-slate-800">
-              <tr>
-                <th class="text-left py-2 px-2 font-semibold">Symbol</th>
-                <th class="text-right py-2 px-2 font-semibold">Price</th>
-                <th class="text-right py-2 px-2 font-semibold">Chg %</th>
-                <th class="text-right py-2 px-2 font-semibold">Volume</th>
-                <th class="text-right py-2 px-2 font-semibold">RVOL</th>
-                <th class="text-right py-2 px-2 font-semibold">Float</th>
-                <th class="text-right py-2 px-2 font-semibold">Mkt Cap</th>
-                <th class="text-center py-2 px-2 font-semibold">Catalyst</th>
-                <th class="text-right py-2 px-2 font-semibold">Intraday Range</th>
-              </tr>
-            </thead>
-            <tbody id="screener-tbody" class="divide-y divide-slate-800/50"></tbody>
-          </table>
+      <div class="mt-3 h-[500px] w-full">
+        <!-- TradingView Stock Screener Widget BEGIN -->
+        <div class="tradingview-widget-container" style="height:100%;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js" async>
+          {
+            "width": "100%",
+            "height": "100%",
+            "defaultColumn": "overview",
+            "defaultScreen": "most_capitalized",
+            "market": "us",
+            "showToolbar": true,
+            "colorTheme": "dark",
+            "locale": "en"
+          }
+          </script>
         </div>
-
-        <!-- Right Side Sparkline / Quick Insight Deck -->
-        <div class="col-span-12 lg:col-span-3 border-l border-slate-800/80 pl-3 flex flex-col justify-between">
-          <div>
-            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Scanner Telemetry</h3>
-            <div id="screener-detail-card" class="card p-3 bg-slate-900/60 border-slate-800 space-y-2 text-xs">
-              <div class="flex justify-between items-center"><span class="text-slate-400">Tracked Low-Floats:</span><span class="mono font-bold text-cyan-400">142</span></div>
-              <div class="flex justify-between items-center"><span class="text-slate-400">HOD Breakouts:</span><span class="mono font-bold text-emerald-400">18</span></div>
-              <div class="flex justify-between items-center"><span class="text-slate-400">Halts Pending:</span><span class="mono font-bold text-amber-400">0</span></div>
-              <div class="flex justify-between items-center"><span class="text-slate-400">Avg Vol Ratio:</span><span class="mono font-bold text-slate-200">4.2x</span></div>
-            </div>
-          </div>
-          <div class="mt-4 p-2.5 rounded bg-slate-950/80 border border-slate-800/80 text-[11px] text-slate-400 leading-relaxed">
-            <span class="text-cyan-400 font-semibold">Click any screener row</span> to immediately populate the primary TradingView chart and sync the Level 2 DOM depth ladder.
-          </div>
-        </div>
+        <!-- TradingView Stock Screener Widget END -->
       </div>
-    </div>
-
-    <!-- Models & Health Strip -->
-    <div class="grid md:grid-cols-3 gap-3 mt-3">
-      <div class="card md:col-span-2 p-4 relative overflow-hidden">
-        <h2 class="text-sm font-semibold text-slate-200">180-Second Competing Model Probabilities <span class="font-normal text-slate-400">· Spread-Adjusted Triple Barrier</span></h2>
-        <div id="probs" class="mt-3 space-y-2 blur-sm select-none" aria-hidden="true"></div>
-        <div class="absolute inset-0 grid place-items-center bg-slate-950/70 backdrop-blur-sm text-center"><div>
-          <svg class="mx-auto h-5 w-5 text-cyan-400 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
-          <p class="text-sm font-semibold text-slate-200">Live Model Telemetry Locked</p>
-          <p class="text-xs text-slate-400 mt-0.5">Authenticated client session required for live probability streams.</p>
-          <a href="login.html" class="btn !text-cyan-400 !border-cyan-500/40 mt-2.5 inline-block font-mono">Request Access / Login</a></div></div>
-      </div>
-      <div class="card p-4"><h2 class="text-sm font-semibold text-slate-200">Ingestion Telemetry</h2><dl id="health" class="mono mt-3 space-y-1.5 text-xs"></dl></div>
     </div>
   </section>
 
