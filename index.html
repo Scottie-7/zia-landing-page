@@ -33,8 +33,21 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 
 <div class="relative z-10 flex flex-col min-h-screen">
 <header class="sticky top-0 z-50 border-b border-slate-800 bg-[#080C14]/90 backdrop-blur">
-  <div class="max-w-[1440px] mx-auto px-4 h-14 flex items-center gap-6">
-    <a href="#top" class="font-mono font-semibold tracking-tight text-slate-100 text-base">Zia Quant Fund</a>
+  <div class="max-w-[1440px] mx-auto px-4 h-16 flex items-center justify-between gap-6">
+    <!-- Left: Brand Logo & Title -->
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-md bg-slate-900 border border-cyan-500/40 flex items-center justify-center overflow-hidden shadow-[0_0_12px_rgba(0,240,255,0.3)] flex-shrink-0">
+        <!-- Temporary placeholder utilizing dark-mode logo structure -->
+        <svg viewBox="0 0 100 100" class="w-full h-full text-cyan-400 p-1" fill="currentColor">
+          <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="4"/>
+          <circle cx="50" cy="50" r="10" fill="#f43f5e"/>
+          <path d="M50 8v84M8 50h84" stroke="currentColor" stroke-width="4"/>
+        </svg>
+      </div>
+      <a href="#top" class="font-mono font-bold tracking-tight text-cyan-400 text-lg drop-shadow-[0_0_10px_rgba(0,240,255,0.6)]">Zia Quant Fund</a>
+    </div>
+
+    <!-- Center: Navigation Tabs -->
     <nav aria-label="Primary" class="hidden md:flex gap-6 text-sm text-slate-400 font-medium">
       <a class="hover:text-cyan-400 transition" href="#platform">Platform</a>
       <a class="hover:text-cyan-400 transition" href="#preview">Terminal Preview</a>
@@ -43,18 +56,22 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       <a class="hover:text-cyan-400 transition" href="#architecture">Microstructure Architecture</a>
       <a class="hover:text-cyan-400 transition" href="#models">Model Suite</a>
     </nav>
-    <div id="pill" class="mono ml-auto hidden sm:flex items-center gap-2 text-xs text-slate-400 border border-slate-800 rounded-full px-3 py-1 bg-slate-900/50" role="status"></div>
-    <a href="login.html" class="ml-auto sm:ml-0 rounded-md bg-cyan-500 px-4 py-1.5 text-sm font-semibold text-slate-950 hover:bg-cyan-400 transition">Client Login</a>
+
+    <!-- Right: Status & Login -->
+    <div class="flex items-center gap-4">
+      <div id="pill" class="mono hidden sm:flex items-center gap-2 text-xs text-slate-400 border border-slate-800 rounded-full px-3 py-1 bg-slate-900/50" role="status"></div>
+      <a href="login.html" class="rounded-md bg-cyan-500 px-4 py-1.5 text-sm font-semibold text-slate-950 hover:bg-cyan-400 transition">Client Login</a>
+    </div>
   </div>
 </header>
 
 <main id="top" class="flex-grow">
   <section class="max-w-4xl mx-auto px-4 pt-16 pb-12 text-center">
     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-xs font-mono mb-4">
-      <span>Sonar Engine v1.2</span> · <span>Custom Deep Learning Intelligence</span>
+      <span>Sonar Engine v1.2</span> · <span>Institutional Machine Learning Intelligence</span>
     </div>
-    <h1 class="text-4xl md:text-5xl font-bold tracking-tight leading-tight">Autonomous Deep Learning Alpha & Custom Execution Intelligence</h1>
-    <p class="mt-5 text-slate-400 text-base md:text-lg max-w-3xl mx-auto leading-relaxed">Sonar deploys proprietary, institution-grade machine learning models fine-tuned to your individual trading strategy, risk profile, and capital allocation. Harnessing multi-venue Level 1 & Level 2 order-book microstructure at 100ms resolution to engineer automated high-probability long, short, and hedging setups.</p>
+    <h1 class="text-4xl md:text-5xl font-bold tracking-tight leading-tight">Institutional Machine Learning Models Engineered For Your Strategy</h1>
+    <p class="mt-5 text-slate-400 text-base md:text-lg max-w-3xl mx-auto leading-relaxed">Deploy custom deep learning trading models tailored precisely to your account size and risk profile. Utilizing real-time L2/L3 order-book microstructure telemetry and multi-venue analytics to automate highest-probability trade execution.</p>
     <div class="mt-8 flex justify-center gap-3">
       <a href="login.html" class="rounded-md bg-cyan-500 px-5 py-2.5 font-semibold text-slate-950 hover:bg-cyan-400 transition">Launch Terminal</a>
       <a href="#architecture" class="rounded-md border border-slate-700 px-5 py-2.5 font-semibold text-slate-300 hover:bg-slate-800 transition">View Architecture</a>
