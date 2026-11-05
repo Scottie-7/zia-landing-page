@@ -40,6 +40,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       <nav aria-label="Primary" class="hidden md:flex gap-6 text-sm text-slate-400 font-medium">
         <a class="hover:text-cyan-400 transition" href="#platform">Platform</a>
         <a class="hover:text-cyan-400 transition" href="#preview">Terminal Preview</a>
+        <a class="hover:text-cyan-400 transition" href="#flow">Order Flow</a>
         <a class="hover:text-cyan-400 transition" href="#ai-stream">AI Alpha Stream</a>
         <a class="hover:text-cyan-400 transition" href="#screener-section">Live Screener</a>
         <a class="hover:text-cyan-400 transition" href="#architecture">Microstructure Architecture</a>
@@ -144,16 +145,35 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       <div class="col-span-12 lg:col-span-3 space-y-3 flex flex-col justify-between">
         <div class="card p-2 flex-1">
           <div class="flex items-center justify-between px-1 pb-1 border-b border-slate-800">
-            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Level 2 DOM Ladder</h2>
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Level 2 DOM · Nasdaq | Arca</h2>
             <span class="text-[10px] text-cyan-400 font-mono">100ms Grid</span>
           </div>
-          <div id="ladder" class="mt-2"></div>
+          <div id="ladder2" class="mt-2"></div>
           <div class="mt-2 flex flex-col gap-1 px-1 text-[10px] text-slate-400 border-t border-slate-800/80 pt-1.5">
             <div class="flex items-center gap-1.5"><span class="ev cy">+1</span><span><b>Iceberg Absorption:</b> Aggressive print ≥ $10k</span></div>
             <div class="flex items-center gap-1.5"><span class="ev am">−1</span><span><b>Unexecuted Depletion:</b> Depletion ≥ $10k, AIR ≤ 0.05</span></div>
           </div>
         </div>
-        <div class="card p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Time & Sales</h2><div id="tape" class="mono mt-1 px-1 text-[11px] leading-[18px]"></div></div>
+        <div class="card p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Time & Sales</h2><div id="tape" class="mono mt-1 px-1 text-[11px] leading-[18px] max-h-[162px] overflow-hidden"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Order Flow: liquidity heatmap, microstructure features, promotion funnel -->
+  <section id="flow" aria-label="Order flow analytics" class="max-w-[1440px] mx-auto px-4 pb-6">
+    <div class="grid grid-cols-12 gap-3 items-stretch">
+      <div class="card col-span-12 lg:col-span-8 p-2 flex flex-col">
+        <div class="flex flex-wrap items-center gap-3 px-1 pb-2 border-b border-slate-800">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Liquidity Heatmap · 180s Window</h2>
+          <span id="heat-sym" class="mono text-[11px] text-cyan-400"></span>
+          <div id="heat-venue" role="group" aria-label="Venue" class="ml-auto flex gap-1"><button class="btn on" data-v="ALL">All venues</button><button class="btn" data-v="NSDQ">Nasdaq</button><button class="btn" data-v="ARCA">Arca</button></div>
+        </div>
+        <div class="relative mt-2 h-[480px]"><canvas id="heat" class="absolute inset-0 w-full h-full" role="img" aria-label="Liquidity heatmap with trade bubbles and 180 second barrier forecast"></canvas></div>
+        <p class="px-1 pt-1.5 mt-2 text-[10px] text-slate-400 border-t border-slate-800/50">Cyan intensity = resting size · bubbles = prints by Lee-Ready side · ◆ cyan +1 iceberg absorption, amber −1 unexecuted depletion · dashed lines = upper/lower 180s barriers</p>
+      </div>
+      <div class="col-span-12 lg:col-span-4 flex flex-col gap-3">
+        <div class="card p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Microstructure Features</h2><div id="feat" class="grid grid-cols-2 gap-2 mt-2"></div></div>
+        <div class="card p-2 flex-1"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Promotion Funnel</h2><div id="funnel" class="mt-2 px-1"></div></div>
       </div>
     </div>
   </section>
@@ -189,31 +209,8 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
           <p class="text-[11px] text-slate-400 pt-1">Models continuously scan L2 order book imbalances to output high-conviction entries aligned with your risk tolerance.</p>
         </div>
 
-        <!-- Center: Recommended Price Entries & Probability of Profit -->
-        <div class="col-span-12 md:col-span-5 bg-slate-950/90 p-4 rounded border border-cyan-500/30 font-mono text-xs space-y-2.5">
-          <div class="text-slate-300 text-[11px] uppercase tracking-wider border-b border-slate-800 pb-1.5 flex justify-between items-center">
-            <span class="font-bold text-cyan-400">Recommended Optimal Setup (ONEG)</span>
-            <span class="bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded text-[10px]">78.4% Probability of Profit</span>
-          </div>
-          <div class="grid grid-cols-3 gap-2 text-center pt-1">
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
-              <div class="text-slate-400 text-[10px]">Rec. Entry</div>
-              <div class="text-sm font-bold text-slate-100 mt-0.5">$2.38 - $2.40</div>
-            </div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
-              <div class="text-slate-400 text-[10px]">Take Profit</div>
-              <div class="text-sm font-bold text-emerald-400 mt-0.5">$2.75 (+14.5%)</div>
-            </div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
-              <div class="text-slate-400 text-[10px]">Stop Loss</div>
-              <div class="text-sm font-bold text-rose-400 mt-0.5">$2.31 (-3.5%)</div>
-            </div>
-          </div>
-          <div class="text-[10px] text-slate-400 flex items-center justify-between pt-1">
-            <span>Signal Source: DeepLOB CNN + Time & Sales Velocity</span>
-            <span class="text-cyan-400">Horizon: τ = 180s</span>
-          </div>
-        </div>
+        <!-- Center: Barrier Forecast (rendered by sonar-pro.js) -->
+        <div id="barrier" class="col-span-12 md:col-span-5 bg-slate-950/90 p-4 rounded border border-cyan-500/30 font-mono text-xs space-y-2.5"><div class="text-slate-400">Awaiting model output…</div></div>
 
         <!-- Right: Client Capital & Risk Management Action -->
         <div class="col-span-12 md:col-span-3 bg-gradient-to-br from-cyan-950/40 to-slate-900/90 p-4 rounded border border-cyan-500/40 flex flex-col justify-between text-center h-full">
@@ -305,6 +302,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 </div>
 
 <script src="sonar-ui.js"></script>
+<script src="sonar-pro.js"></script>
 <script>
 // Quantum Plexus Background Network Animation
 const canvas = document.getElementById('bg-canvas');
@@ -355,7 +353,7 @@ function animateBg() {
       }
     }
   });
-  requestAnimationFrame(animateBg);
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) requestAnimationFrame(animateBg);
 }
 animateBg();
 

@@ -30,23 +30,13 @@ const base = s => SYMS[s] || ["Sample " + s, 1 + (hash(s) % 700) / 100, (hash(s)
 const S = {
   book: symbol => {
     const mid = base(symbol)[1], t = tk(mid), r = rng(hash(symbol) + Math.floor(Date.now() / 2000)), events = [];
-    const makeLevels = (dir) => {
-      let p = mid + dir * (t * 0.5);
-      return Array.from({length: 6}, () => {
-        const x = {price: +p.toFixed(dp(mid)), size: Math.round((1 + r() * 25) ** 1.3) * 100};
-        p += dir * t;
-        return x;
-      });
-    };
-    const asks = makeLevels(1);
-    const bids = makeLevels(-1);
-    
-    if (r() < 0.6) events.push({side: "bid", price: bids[Math.floor(r() * 3)].price, type: "iceberg_absorption"});
-    if (r() < 0.6) events.push({side: "ask", price: asks[Math.floor(r() * 3)].price, type: "unexecuted_depletion"});
-    
-    return {symbol, ts: Date.now(), mid, bids, asks, events};
+    const lv = dir => { let p = mid + dir * t * 0.5; return Array.from({length: 10}, () => { const x = {price: +p.toFixed(dp(mid)), size: Math.round((1 + r() * 25) ** 1.3) * 100}; p += dir * t * (r() > 0.7 ? 2 : 1); return x; }); };
+    const venues = {NSDQ: {bids: lv(-1), asks: lv(1)}, ARCA: {bids: lv(-1), asks: lv(1)}};
+    if (r() < 0.7) events.push({venue: "ARCA", side: "bid", price: venues.ARCA.bids[Math.floor(r() * 4)].price, type: "iceberg_absorption"});
+    if (r() < 0.7) events.push({venue: "NSDQ", side: "ask", price: venues.NSDQ.asks[Math.floor(r() * 4)].price, type: "unexecuted_depletion"});
+    return {symbol, ts: Date.now(), mid, bids: venues.NSDQ.bids, asks: venues.NSDQ.asks, venues, events};
   },
-  
+
   tape: symbol => {
     const mid = base(symbol)[1], r = rng(hash(symbol) + Math.floor(Date.now() / 2000)); let t = Date.now();
     return Array.from({length: 12}, () => { t -= r() * 2500; return {t: Math.round(t), price: +(mid + (r() - 0.5) * tk(mid) * 4).toFixed(dp(mid)), size: Math.round(1 + r() ** 2 * 20) * 100, side: r() > 0.47 ? "buy" : "sell"}; });
@@ -215,7 +205,7 @@ function sess() {
 
 async function refresh() {
   const s = st.sym, [b, t, p, u] = await Promise.all([safe(P.getBook(s)), safe(P.getTape(s)), safe(P.getProbabilities(s)), safe(P.getStatus())]);
-  if (s === st.sym) { drawBook(b); drawTape(t); drawProbs(p); drawStatus(u); }
+  if (s === st.sym) { drawBook(b); drawTape(t); drawProbs(p); drawStatus(u); document.dispatchEvent(new CustomEvent("sonar:tick", {detail: {sym: s, tf: st.tf, book: b, tape: t, probs: p, status: u}})); }
 }
 
 function setSym(s) { 
@@ -237,5 +227,5 @@ async function init() {
   sess(); setInterval(sess, 6e4);
   refresh(); setInterval(refresh, 2000);
 }
-return {init, setSym, P};
+return {init, setSym, P, st, base, live};
 })();
