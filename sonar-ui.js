@@ -77,18 +77,23 @@ const P = {
 // ---------- RENDERERS ----------
 const st = {sym: "ONEG", tf: "5m", tab: "gainers"};
 let movers = [];
-let tvWidgetInitialized = false;
 
 function renderTVChart(symbol, tf) {
   const container = $("#tradingview_chart");
   if (!container) return;
+
+  // Wait for TradingView script to load asynchronously to avoid race conditions
+  if (typeof TradingView === "undefined") {
+    setTimeout(() => renderTVChart(symbol, tf), 100);
+    return;
+  }
   
   const tfMap = { "1m": "1", "5m": "5", "15m": "15", "1D": "D" };
   const interval = tfMap[tf] || "5";
   const formattedSymbol = symbol.includes(":") ? symbol : `NASDAQ:${symbol}`;
 
-  if (typeof Trading !== "undefined" || typeof TradingView !== "undefined") {
-    container.innerHTML = "";
+  container.innerHTML = "";
+  try {
     new TradingView.widget({
       "autosize": true,
       "symbol": formattedSymbol,
@@ -110,6 +115,8 @@ function renderTVChart(symbol, tf) {
       ],
       "container_id": "tradingview_chart"
     });
+  } catch (e) {
+    console.error("TradingView init error:", e);
   }
   const csymEl = $("#csym");
   if (csymEl) csymEl.textContent = `${st.sym} · ${st.tf}`;
