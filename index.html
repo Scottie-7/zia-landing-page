@@ -71,7 +71,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     </div>
 
     <div class="grid grid-cols-12 gap-3 items-stretch">
-      <!-- Live TradingView Market Movers Panel (Expanded Height & Gainers Default) -->
+      <!-- Live TradingView Market Movers Panel -->
       <div class="card col-span-12 lg:col-span-3 flex flex-col p-2">
         <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 mb-2">Live Market Movers</h2>
         <div class="h-[600px] w-full overflow-hidden rounded">
@@ -102,7 +102,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
         </div>
       </div>
 
-      <!-- Chart Panel (Expanded Height & 1m Default) -->
+      <!-- Chart Panel -->
       <div class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pb-2 border-b border-slate-800/80">
           <span id="csym" class="mono font-semibold text-sm text-cyan-400">ONEG · 1m</span>
@@ -132,7 +132,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     </div>
   </section>
 
-  <!-- Live TradingView Stock Screener Panel (5 Rows Capped + Soft Locked Overlay) -->
+  <!-- Live TradingView Stock Screener Panel (5 Rows Capped + Lightly Filtered Preview Overlay) -->
   <section id="screener-section" class="max-w-[1440px] mx-auto px-4 pb-14">
     <div class="card p-3 relative overflow-hidden">
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
@@ -162,13 +162,12 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
         </div>
         <!-- TradingView Stock Screener Widget END -->
 
-        <!-- Soft Blurred / Locked Overlay Layer -->
-        <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px] flex flex-col items-center justify-center text-center p-4">
-          <div class="bg-slate-900/90 border border-cyan-500/40 p-5 rounded-lg shadow-2xl max-w-md">
-            <svg class="mx-auto h-6 w-6 text-cyan-400 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
-            <h3 class="text-sm font-bold text-slate-100 uppercase tracking-wider">Custom Screener Engine Locked</h3>
-            <p class="text-xs text-slate-400 mt-1 leading-relaxed">Full multi-venue order book screening & custom quantitative filter channels require authenticated operator credentials.</p>
-            <a href="login.html" class="btn !text-cyan-400 !border-cyan-500/40 mt-3 inline-block font-mono">Unlock Full Scanner Access</a>
+        <!-- Lightly Filtered Preview Badge / Notice Layer -->
+        <div class="absolute inset-0 bg-slate-950/25 backdrop-blur-[0.5px] pointer-events-none flex items-start justify-end p-3">
+          <div class="bg-slate-900/90 border border-cyan-500/40 px-3 py-1.5 rounded shadow-lg pointer-events-auto flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span class="text-xs font-mono text-slate-200">Custom Screener · <span class="text-cyan-400">Pro Feature</span></span>
+            <a href="login.html" class="text-xs text-cyan-400 underline ml-2 hover:text-cyan-300 font-mono">Unlock</a>
           </div>
         </div>
       </div>
