@@ -77,17 +77,18 @@ const P = {
 // ---------- RENDERERS ----------
 const st = {sym: "ONEG", tf: "5m", tab: "gainers"};
 let movers = [];
+let tvWidgetInitialized = false;
 
 function renderTVChart(symbol, tf) {
   const container = $("#tradingview_chart");
   if (!container) return;
-  container.innerHTML = "";
   
   const tfMap = { "1m": "1", "5m": "5", "15m": "15", "1D": "D" };
   const interval = tfMap[tf] || "5";
   const formattedSymbol = symbol.includes(":") ? symbol : `NASDAQ:${symbol}`;
 
-  if (typeof TradingView !== "undefined") {
+  if (typeof Trading !== "undefined" || typeof TradingView !== "undefined") {
+    container.innerHTML = "";
     new TradingView.widget({
       "autosize": true,
       "symbol": formattedSymbol,
@@ -110,19 +111,23 @@ function renderTVChart(symbol, tf) {
       "container_id": "tradingview_chart"
     });
   }
-  $("#csym").textContent = `${st.sym} · ${st.tf}`;
+  const csymEl = $("#csym");
+  if (csymEl) csymEl.textContent = `${st.sym} · ${st.tf}`;
 }
 
 function drawMovers() {
+  const moversEl = $("#movers");
+  if (!moversEl) return;
   const rows = {gainers: m => m.filter(x => x.pct_change > 0).sort((a, b) => b.pct_change - a.pct_change), losers: m => m.filter(x => x.pct_change < 0).sort((a, b) => a.pct_change - b.pct_change), active: m => [...m].sort((a, b) => b.volume - a.volume)}[st.tab];
-  $("#movers").innerHTML = rows(movers).map(m => `<tr data-s="${m.symbol}" tabindex="0" class="cursor-pointer border-t border-slate-800/60 hover:bg-slate-800/60 ${m.symbol === st.sym ? "bg-slate-800/80" : ""}">
+  moversEl.innerHTML = rows(movers).map(m => `<tr data-s="${m.symbol}" tabindex="0" class="cursor-pointer border-t border-slate-800/60 hover:bg-slate-800/60 ${m.symbol === st.sym ? "bg-slate-800/80" : ""}">
     <td class="py-1.5 pl-2"><div class="font-semibold text-slate-200">${m.symbol}${m.pct_change >= 5 && m.rvol >= 2 ? ' <span class="t2" title="Meets Tier 2 rule">T2</span>' : ""}</div><div class="truncate max-w-[90px] text-[10px] text-slate-400">${m.name}</div></td>
     <td class="text-right text-slate-300">${f(m.price, dp(m.price))}</td><td class="text-right ${m.pct_change >= 0 ? "text-emerald-400" : "text-rose-400"}">${m.pct_change >= 0 ? "+" : ""}${f(m.pct_change)}%</td>
     <td class="text-right text-slate-400">${cmp.format(m.volume)}</td><td class="text-right pr-2 text-slate-400">${m.rvol.toFixed(1)}</td></tr>`).join("");
 }
 
 function drawBook(b) {
-  if (!b) return;
+  const ladderEl = $("#ladder");
+  if (!b || !ladderEl) return;
   const d = dp(b.mid), mid = b.mid;
   const asks = [...b.asks].slice(0, 5).reverse();
   const bids = [...b.bids].slice(0, 5);
@@ -182,30 +187,39 @@ function drawBook(b) {
   });
 
   html += `</div></div>`;
-  $("#ladder").innerHTML = html;
+  ladderEl.innerHTML = html;
 }
 
 function drawTape(t) {
-  if (t) $("#tape").innerHTML = t.map(x => `<div class="flex justify-between ${x.side === "buy" ? "text-emerald-400" : "text-amber-400"}"><span>${new Date(x.t).toLocaleTimeString("en-US", {hour12: false})}</span><span>${f(x.price, dp(x.price))}</span><span>${x.size.toLocaleString()}</span></div>`).join("");
+  const tapeEl = $("#tape");
+  if (t && tapeEl) tapeEl.innerHTML = t.map(x => `<div class="flex justify-between ${x.side === "buy" ? "text-emerald-400" : "text-amber-400"}"><span>${new Date(x.t).toLocaleTimeString("en-US", {hour12: false})}</span><span>${f(x.price, dp(x.price))}</span><span>${x.size.toLocaleString()}</span></div>`).join("");
 }
 
 function drawProbs(p) {
+  const probsEl = $("#probs");
+  if (!probsEl) return;
   p = p || {p_down: 0.3, p_neutral: 0.4, p_up: 0.3};
-  $("#probs").innerHTML = [["Down", p.p_down, "bg-amber-500"], ["Neutral", p.p_neutral, "bg-slate-500"], ["Up", p.p_up, "bg-emerald-500"]].map(([n, v, c]) =>
+  probsEl.innerHTML = [["Down", p.p_down, "bg-amber-500"], ["Neutral", p.p_neutral, "bg-slate-500"], ["Up", p.p_up, "bg-emerald-500"]].map(([n, v, c]) =>
     `<div class="flex items-center gap-2 text-xs"><span class="w-14 text-slate-300 font-medium">${n}</span><div class="flex-1 h-2 rounded bg-slate-800/80 overflow-hidden"><div class="${c} h-2 rounded" style="width:${v * 100}%"></div></div><span class="mono w-12 text-right text-slate-200">${(v * 100).toFixed(1)}%</span></div>`).join("");
 }
 
 function drawStatus(s) {
   s = s || {state: "online", grid_ms: 100, book_age_ms: 25, dropped_rows: 0}; 
   const on = s.state === "online";
-  $("#pill").innerHTML = `<span class="dot ${on ? "on" : ""}"></span><span>Grid Active · ${s.grid_ms}ms · Ping 14ms</span>`;
-  $("#health").innerHTML = [["Grid Aligner", s.grid_ms + " ms"], ["Book Age", s.book_age_ms + " ms"], ["Dropped Rows", s.dropped_rows]].map(([k, v]) => `<div class="flex justify-between"><dt class="text-slate-400">${k}</dt><dd class="text-slate-200">${v}</dd></div>`).join("");
-  const d = $("#drop"); d.classList.toggle("hidden", !(s.dropped_rows > 0)); d.textContent = `DATA DROP · ${s.dropped_rows} rows dropped this session`;
+  const pillEl = $("#pill"), healthEl = $("#health"), dropEl = $("#drop");
+  if (pillEl) pillEl.innerHTML = `<span class="dot ${on ? "on" : ""}"></span><span>Grid Active · ${s.grid_ms}ms · Ping 14ms</span>`;
+  if (healthEl) healthEl.innerHTML = [["Grid Aligner", s.grid_ms + " ms"], ["Book Age", s.book_age_ms + " ms"], ["Dropped Rows", s.dropped_rows]].map(([k, v]) => `<div class="flex justify-between"><dt class="text-slate-400">${k}</dt><dd class="text-slate-200">${v}</dd></div>`).join("");
+  if (dropEl) {
+    dropEl.classList.toggle("hidden", !(s.dropped_rows > 0));
+    dropEl.textContent = `DATA DROP · ${s.dropped_rows} rows dropped this session`;
+  }
 }
 
 function sess() {
+  const sessEl = $("#sess");
+  if (!sessEl) return;
   const p = new Intl.DateTimeFormat("en-US", {timeZone: "America/New_York", hour: "numeric", minute: "numeric", hourCycle: "h23"}).formatToParts(new Date()), g = t => +p.find(x => x.type === t).value, m = g("hour") * 60 + g("minute");
-  $("#sess").textContent = m < 240 || m >= 1200 ? "Closed" : m < 570 ? "Premarket" : m < 960 ? "Regular" : "After-hours";
+  sessEl.textContent = m < 240 || m >= 1200 ? "Closed" : m < 570 ? "Premarket" : m < 960 ? "Regular" : "After-hours";
 }
 
 async function refresh() {
@@ -215,7 +229,8 @@ async function refresh() {
 
 function setSym(s) { 
   st.sym = s.toUpperCase(); 
-  $("#q").value = st.sym; 
+  const qEl = $("#q");
+  if (qEl) qEl.value = st.sym; 
   drawMovers(); 
   renderTVChart(st.sym, st.tf); 
   refresh(); 
@@ -226,9 +241,13 @@ async function init() {
   const all = a => document.querySelectorAll(a);
   all("[data-tab]").forEach(b => b.onclick = () => { st.tab = b.dataset.tab; all("[data-tab]").forEach(x => x.classList.toggle("on", x === b)); drawMovers(); });
   all("[data-tf]").forEach(b => b.onclick = () => { st.tf = b.dataset.tf; all("[data-tf]").forEach(x => x.classList.toggle("on", x === b)); renderTVChart(st.sym, st.tf); });
-  $("#qf").onsubmit = e => { e.preventDefault(); const v = $("#q").value.trim(); if (v) setSym(v); };
-  const pick = e => { const r = e.target.closest("tr"); if (r && (e.type === "click" || e.key === "Enter")) setSym(r.dataset.s); };
-  $("#movers").onclick = pick; $("#movers").onkeydown = pick;
+  const qfEl = $("#qf");
+  if (qfEl) qfEl.onsubmit = e => { e.preventDefault(); const v = $("#q").value.trim(); if (v) setSym(v); };
+  const moversEl = $("#movers");
+  if (moversEl) {
+    const pick = e => { const r = e.target.closest("tr"); if (r && (e.type === "click" || e.key === "Enter")) setSym(r.dataset.s); };
+    moversEl.onclick = pick; moversEl.onkeydown = pick;
+  }
   sess(); setInterval(sess, 6e4);
   movers = (await safe(P.getMovers())) || []; drawMovers();
   refresh(); setInterval(refresh, 2000);
