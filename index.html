@@ -36,8 +36,8 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
   <div class="max-w-[1440px] mx-auto px-4 h-16 flex items-center justify-between gap-6">
     <!-- Navigation Left: Zia Quant Fund Title moved right next to Platform tab -->
     <div class="flex items-center gap-6">
-      <a href="#top" class="font-mono font-bold tracking-tight text-cyan-400 text-base drop-shadow-[0_0_10px_rgba(0,240,255,0.6)]">Zia Quant Fund</a>
-      <nav aria-label="Primary" class="hidden md:flex gap-6 text-sm text-slate-400 font-medium">
+      <a href="#top" class="whitespace-nowrap font-mono font-bold tracking-tight text-cyan-400 text-base drop-shadow-[0_0_10px_rgba(0,240,255,0.6)]">Zia Quant Fund</a>
+      <nav aria-label="Primary" class="hidden lg:flex gap-5 text-sm text-slate-400 font-medium whitespace-nowrap">
         <a class="hover:text-cyan-400 transition" href="#platform">Platform</a>
         <a class="hover:text-cyan-400 transition" href="#preview">Terminal Preview</a>
         <a class="hover:text-cyan-400 transition" href="#flow">Order Flow</a>
@@ -50,8 +50,8 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 
     <!-- Right: Status & Login -->
     <div class="flex items-center gap-4">
-      <div id="pill" class="mono hidden sm:flex items-center gap-2 text-xs text-slate-400 border border-slate-800 rounded-full px-3 py-1 bg-slate-900/50" role="status"></div>
-      <a href="login.html" class="rounded-md bg-cyan-500 px-4 py-1.5 text-sm font-semibold text-slate-950 hover:bg-cyan-400 transition">Client Login</a>
+      <div id="pill" class="mono hidden xl:flex whitespace-nowrap items-center gap-2 text-xs text-slate-400 border border-slate-800 rounded-full px-3 py-1 bg-slate-900/50" role="status"></div>
+      <a href="login.html" class="whitespace-nowrap rounded-md bg-cyan-500 px-4 py-1.5 text-sm font-semibold text-slate-950 hover:bg-cyan-400 transition">Client Login</a>
     </div>
   </div>
 </header>
@@ -80,7 +80,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       <span>Sonar v1.2: Machine Learning Engine</span>
     </div>
     <h1 class="text-4xl md:text-5xl font-bold tracking-tight leading-tight">Machine Learning Models Engineered For Your Trading Strategies</h1>
-    <p class="mt-5 text-slate-400 text-base md:text-lg max-w-3xl mx-auto leading-relaxed">Deploy institutional-grade deep learning models fine-tuned to your individual trading strategy, risk profile, and capital allocation. Harnessing multi-venue Level 1 & Level 2 order-book microstructure at 100ms resolution to engineer automated high-probability long, short, and hedging setups.</p>
+    <p class="mt-5 text-slate-400 text-base md:text-lg max-w-3xl mx-auto leading-relaxed">Deploy institutional-grade deep learning models tuned to your own strategy, risk profile, and capital allocation. Level 1–3 multi-venue order-book reconstruction at 100ms resolution, configurable prediction horizons, advanced customization, and live model decision access for retail and individual traders.</p>
     <div class="mt-8 flex justify-center gap-3">
       <a href="login.html" class="rounded-md bg-cyan-500 px-5 py-2.5 font-semibold text-slate-950 hover:bg-cyan-400 transition">Launch Terminal</a>
       <a href="#architecture" class="rounded-md border border-slate-700 px-5 py-2.5 font-semibold text-slate-300 hover:bg-slate-800 transition">View Architecture</a>
@@ -92,14 +92,17 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     <div class="card p-2 mb-3 flex flex-wrap items-center gap-2 border-slate-800">
       <form id="qf" class="flex"><label for="q" class="sr-only">Symbol</label><input id="q" value="ONEG" autocomplete="off" class="mono w-28 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm uppercase text-slate-100"><button class="btn ml-1 hover:bg-slate-800">Go</button></form>
       <span id="sess" class="btn !text-cyan-400 font-mono" title="US equity session"></span>
+      <span id="sync-chip" class="btn !text-emerald-400 font-mono" title="Every panel follows the selected ticker"></span>
+      <button id="open-pal" class="btn font-mono" title="Command palette (Ctrl/Cmd+K or /)">Search ⌘K</button>
+      <button id="edit-layout" class="btn font-mono" title="Drag and resize panels">Edit layout</button><button id="reset-layout" class="btn font-mono">Reset</button>
       <div role="group" aria-label="Timeframe" class="flex gap-1 ml-auto">
         <button class="btn on" data-tf="1m">1m</button><button class="btn" data-tf="5m">5m</button><button class="btn" data-tf="15m">15m</button><button class="btn" data-tf="1D">1D</button>
       </div>
     </div>
 
-    <div class="grid grid-cols-12 gap-3 items-stretch">
+    <div data-grid="preview" class="grid grid-cols-12 gap-3 items-stretch">
       <!-- Live TradingView Market Movers Panel -->
-      <div class="card col-span-12 lg:col-span-3 flex flex-col p-2">
+      <div data-panel="movers" class="card col-span-12 lg:col-span-3 flex flex-col p-2">
         <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 mb-2">Live Market Movers</h2>
         <div class="h-[600px] w-full overflow-hidden rounded">
           <!-- TradingView Hotlists Widget BEGIN -->
@@ -130,7 +133,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       </div>
 
       <!-- Chart Panel -->
-      <div class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
+      <div data-panel="chart" class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pb-2 border-b border-slate-800/80">
           <span id="csym" class="mono font-semibold text-sm text-cyan-400">ONEG · 1m</span>
           <span id="ohlc" class="mono text-[11px] text-slate-400">TradingView Advanced Real-Time Chart</span>
@@ -142,13 +145,14 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       </div>
 
       <!-- Level 2 DOM & Tape Panel -->
-      <div class="col-span-12 lg:col-span-3 space-y-3 flex flex-col justify-between">
+      <div data-panel="book" class="col-span-12 lg:col-span-3 space-y-3 flex flex-col justify-between">
         <div class="card p-2 flex-1">
           <div class="flex items-center justify-between px-1 pb-1 border-b border-slate-800">
-            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Level 2 DOM · Nasdaq | Arca</h2>
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Order Book · All Venues</h2>
             <span class="text-[10px] text-cyan-400 font-mono">100ms Grid</span>
           </div>
-          <div id="ladder2" class="mt-2"></div>
+          <div id="vbar" class="relative mt-1.5 flex items-center justify-between gap-1"></div>
+          <div id="ladder2" class="mt-1.5"></div>
           <div class="mt-2 flex flex-col gap-1 px-1 text-[10px] text-slate-400 border-t border-slate-800/80 pt-1.5">
             <div class="flex items-center gap-1.5"><span class="ev cy">+1</span><span><b>Iceberg Absorption:</b> Aggressive print ≥ $10k</span></div>
             <div class="flex items-center gap-1.5"><span class="ev am">−1</span><span><b>Unexecuted Depletion:</b> Depletion ≥ $10k, AIR ≤ 0.05</span></div>
@@ -159,21 +163,34 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     </div>
   </section>
 
-  <!-- Order Flow: liquidity heatmap, microstructure features, promotion funnel -->
+  <!-- Advanced Order Flow Workspace (panels can be dragged / resized in Edit layout mode) -->
   <section id="flow" aria-label="Order flow analytics" class="max-w-[1440px] mx-auto px-4 pb-6">
-    <div class="grid grid-cols-12 gap-3 items-stretch">
-      <div class="card col-span-12 lg:col-span-8 p-2 flex flex-col">
-        <div class="flex flex-wrap items-center gap-3 px-1 pb-2 border-b border-slate-800">
-          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Liquidity Heatmap · 180s Window</h2>
-          <span id="heat-sym" class="mono text-[11px] text-cyan-400"></span>
-          <div id="heat-venue" role="group" aria-label="Venue" class="ml-auto flex gap-1"><button class="btn on" data-v="ALL">All venues</button><button class="btn" data-v="NSDQ">Nasdaq</button><button class="btn" data-v="ARCA">Arca</button></div>
+    <div data-grid="flow" class="grid grid-cols-12 gap-3 items-stretch">
+      <div data-panel="heat" class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
+        <div class="flex flex-wrap items-center gap-2 px-1 pb-2 border-b border-slate-800">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Liquidity Heatmap</h2><span id="heat-sym" class="mono text-[11px] text-cyan-400"></span>
+          <button class="btn ml-auto font-mono" data-sub>Venues <span data-vcount>2/12</span> · Add data</button>
         </div>
-        <div class="relative mt-2 h-[480px]"><canvas id="heat" class="absolute inset-0 w-full h-full" role="img" aria-label="Liquidity heatmap with trade bubbles and 180 second barrier forecast"></canvas></div>
-        <p class="px-1 pt-1.5 mt-2 text-[10px] text-slate-400 border-t border-slate-800/50">Cyan intensity = resting size · bubbles = prints by Lee-Ready side · ◆ cyan +1 iceberg absorption, amber −1 unexecuted depletion · dashed lines = upper/lower 180s barriers</p>
+        <div class="relative mt-2 flex-1 min-h-[280px]"><canvas id="heat" class="absolute inset-0 w-full h-full" role="img" aria-label="Liquidity heatmap with trade bubbles and horizon barriers"></canvas></div>
+        <p class="px-1 pt-1.5 mt-2 text-[10px] text-slate-400 border-t border-slate-800/50">Cyan = resting size (selected venues, aggregated) · bubbles = prints by Lee-Ready side · ◆ cyan +1 iceberg absorption, amber −1 unexecuted depletion · dashed = horizon barriers</p>
       </div>
-      <div class="col-span-12 lg:col-span-4 flex flex-col gap-3">
-        <div class="card p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Microstructure Features</h2><div id="feat" class="grid grid-cols-2 gap-2 mt-2"></div></div>
-        <div class="card p-2 flex-1"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Promotion Funnel</h2><div id="funnel" class="mt-2 px-1"></div></div>
+      <div data-panel="spectro" class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
+        <div class="flex flex-wrap items-center gap-2 px-1 pb-2 border-b border-slate-800">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Order-Flow Spectrogram</h2><span class="mono text-[11px] text-cyan-400">level Δ size</span>
+          <button class="btn ml-auto font-mono" data-sub>Venues <span data-vcount>2/12</span> · Add data</button>
+        </div>
+        <div class="relative mt-2 flex-1 min-h-[280px]"><canvas id="spec" class="absolute inset-0 w-full h-full" role="img" aria-label="Order flow spectrogram of liquidity added and removed per book level"></canvas></div>
+        <p class="px-1 pt-1.5 mt-2 text-[10px] text-slate-400 border-t border-slate-800/50">Rows = book levels (asks on top, bids below) · columns = 2 s steps · cyan = liquidity added, amber = liquidity removed</p>
+      </div>
+      <div data-panel="feat" class="card col-span-12 md:col-span-6 lg:col-span-4 p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Microstructure Features</h2><div id="feat" class="grid grid-cols-2 gap-2 mt-2"></div></div>
+      <div data-panel="funnel" class="card col-span-12 md:col-span-6 lg:col-span-4 p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Promotion Funnel</h2><div id="funnel" class="mt-2 px-1"></div></div>
+      <div data-panel="latency" class="card col-span-12 lg:col-span-4 p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Pipeline Latency Waterfall</h2><div id="lat" class="mt-2 px-1"></div></div>
+      <div data-panel="evalb" class="card col-span-12 p-2">
+        <div class="flex flex-wrap items-center gap-2 px-1 pb-2 border-b border-slate-800">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Model Evaluation Board</h2><span class="text-[10px] font-mono text-amber-400 bg-amber-950/40 border border-amber-800/50 px-2 py-0.5 rounded">Sample values · pending first data pull</span>
+          <div id="ev-tabs" class="ml-auto flex gap-1"><button class="btn on" data-m="XGB">RF / XGBoost</button><button class="btn" data-m="LSTM">LSTM-Attention</button><button class="btn" data-m="DLOB">DeepLOB</button></div>
+        </div>
+        <div id="evalb-body" class="mt-3 px-1"></div>
       </div>
     </div>
   </section>
@@ -183,8 +200,8 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     <div class="card p-4 relative overflow-hidden bg-slate-900/90 border-cyan-500/40">
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
         <div class="flex items-center gap-2">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-100">Deep Learning Trading Engine Dashboard</h2>
-          <span class="text-[10px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-800 px-2 py-0.5 rounded">Live 180s Horizon Evaluation</span>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-100">Autonomous AI Trade Decision Engine & Strategy Optimizer</h2>
+          <div class="flex flex-wrap items-center gap-2"><span class="text-[10px] font-mono text-slate-400">Prediction horizon</span><div id="hz" class="flex gap-1" role="group" aria-label="Prediction horizon"><button class="btn" data-h="30">30s</button><button class="btn" data-h="60">60s</button><button class="btn on" data-h="180">180s</button><button class="btn" data-h="300">300s</button><button class="btn" data-h="900">900s</button></div><label class="flex items-center gap-1 text-[10px] font-mono text-slate-400">Barrier k <input id="kk" type="range" min="0.5" max="2" step="0.1" value="1" class="w-20 accent-cyan-400"><output id="kv" class="text-cyan-400">1.0</output></label></div>
         </div>
         <div class="flex items-center gap-2">
           <span class="text-xs font-mono text-cyan-400 bg-cyan-950/40 border border-cyan-800/50 px-2.5 py-1 rounded flex items-center gap-1.5">
@@ -193,9 +210,9 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
         </div>
       </div>
 
-      <div class="grid grid-cols-12 gap-4 mt-4 items-center">
+      <div data-grid="ai" class="grid grid-cols-12 gap-4 mt-4 items-center">
         <!-- Left: Strategy & Trade Type Selector Matrix -->
-        <div class="col-span-12 md:col-span-4 space-y-3 bg-slate-950/80 p-4 rounded border border-slate-800">
+        <div data-panel="strat" class="col-span-12 md:col-span-4 space-y-3 bg-slate-950/80 p-4 rounded border border-slate-800">
           <div class="text-xs font-semibold text-slate-300 uppercase tracking-wide flex justify-between">
             <span>Execution Strategy Selector</span>
             <span class="text-cyan-400 font-mono">Client Profile #842</span>
@@ -210,10 +227,10 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
         </div>
 
         <!-- Center: Barrier Forecast (rendered by sonar-pro.js) -->
-        <div id="barrier" class="col-span-12 md:col-span-5 bg-slate-950/90 p-4 rounded border border-cyan-500/30 font-mono text-xs space-y-2.5"><div class="text-slate-400">Awaiting model output…</div></div>
+        <div id="barrier" data-panel="barrier" class="col-span-12 md:col-span-5 bg-slate-950/90 p-4 rounded border border-cyan-500/30 font-mono text-xs space-y-2.5"><div class="text-slate-400">Awaiting model output…</div></div>
 
         <!-- Right: Client Capital & Risk Management Action -->
-        <div class="col-span-12 md:col-span-3 bg-gradient-to-br from-cyan-950/40 to-slate-900/90 p-4 rounded border border-cyan-500/40 flex flex-col justify-between text-center h-full">
+        <div data-panel="risk" class="col-span-12 md:col-span-3 bg-gradient-to-br from-cyan-950/40 to-slate-900/90 p-4 rounded border border-cyan-500/40 flex flex-col justify-between text-center h-full">
           <div>
             <span class="inline-block p-2 rounded-full bg-cyan-500/10 text-cyan-400 mb-1">
               <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
@@ -272,17 +289,30 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
   <!-- Expanded Technical Sections -->
   <section id="platform" class="max-w-5xl mx-auto px-4 pb-16">
     <h2 class="text-2xl font-bold tracking-tight">Platform Access Hierarchy</h2>
-    <p class="mt-1 text-slate-400 text-sm">Public portal offers open research documentation; live data and model outputs require authentication.</p>
+    <p class="mt-1 text-slate-400 text-sm">Public portal offers open research documentation and a free preview. Live market-data feeds (Level 1–3, per venue) are a paid add-on billed separately from terminal access; a 30-day free trial is planned.</p>
     <div class="mt-6 grid md:grid-cols-2 gap-4">
       <div class="card p-6"><h3 class="font-semibold text-base text-slate-200">Public Research Portal</h3><ul class="mt-3 space-y-2 text-sm text-slate-400"><li>· Small-Cap Daily Movers & Market Breadth</li><li>· Historical Bar Charts & Volume Profile</li><li>· Technical Specifications & Architectural Whitepapers</li><li>· Quantitative Methodology Glossary</li></ul></div>
-      <div class="card p-6 border-cyan-500/40 bg-cyan-950/10"><h3 class="font-semibold text-base text-cyan-400">Authenticated Client Terminal</h3><ul class="mt-3 space-y-2 text-sm text-slate-300"><li>· Live Multi-Venue L2 Depth Ladder (100ms Resolution)</li><li>· Real-Time Calibrated Model Probabilities (180s Horizon)</li><li>· Microstructure Anomaly Signals (AIR Icebergs & Spoof Depletions)</li><li>· Replay System for Historical Order Book Sequences</li></ul></div>
+      <div class="card p-6 border-cyan-500/40 bg-cyan-950/10"><h3 class="font-semibold text-base text-cyan-400">Authenticated Client Terminal</h3><ul class="mt-3 space-y-2 text-sm text-slate-300"><li>· Live Multi-Venue L2/L3 Order Book Reconstruction (100ms Resolution)</li><li>· Real-Time Calibrated Model Probabilities (Configurable Horizon)</li><li>· Microstructure Anomaly Signals (AIR Icebergs & Spoof Depletions)</li><li>· Replay System for Historical Order Book Sequences</li></ul></div>
     </div>
   </section>
 
   <section id="architecture" class="max-w-5xl mx-auto px-4 pb-16"><h2 class="text-2xl font-bold tracking-tight">Market Microstructure Engine Architecture</h2><p class="mt-1 text-slate-400 text-sm">Engineered for deterministic sub-second alignment and zero-data-loss streaming.</p><div id="arch" class="mt-6 grid sm:grid-cols-2 gap-4"></div></section>
+    <section id="hardware" class="max-w-5xl mx-auto px-4 pb-16">
+    <h2 class="text-2xl font-bold tracking-tight">Training Infrastructure</h2>
+    <p class="mt-1 text-slate-400 text-sm">Models are trained on a shared high-performance cluster: multi-GPU nodes for DeepLOB and sequence models, high-memory CPU nodes for feature engineering and tree ensembles.</p>
+    <div class="mt-6 grid md:grid-cols-3 gap-4">
+      <article class="card p-5"><h3 class="font-mono text-sm font-semibold text-cyan-400">Dell PowerEdge R760XA</h3><p class="text-[11px] text-slate-400">Multi-GPU training node</p>
+        <dl class="mt-3 space-y-1.5 text-xs"><div class="flex justify-between gap-3"><dt class="text-slate-400">GPUs</dt><dd class="text-slate-200 text-right">2× NVIDIA H100 NVL, 94 GB each</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">CUDA cores</dt><dd class="text-slate-200">16,896 per GPU</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">CPUs</dt><dd class="text-slate-200 text-right">2× Xeon Platinum 8562Y+ · 2.8 GHz</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">Cores / threads</dt><dd class="text-slate-200">64 / 128</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">Memory</dt><dd class="text-slate-200">1,024 GiB</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">CUDA · compute</dt><dd class="text-slate-200">13.0 · 9.0</dd></div></dl></article>
+      <article class="card p-5"><h3 class="font-mono text-sm font-semibold text-cyan-400">Dell PowerEdge R7525</h3><p class="text-[11px] text-slate-400">GPU node</p>
+        <dl class="mt-3 space-y-1.5 text-xs"><div class="flex justify-between gap-3"><dt class="text-slate-400">GPU</dt><dd class="text-slate-200 text-right">1× NVIDIA A100 · 40 GiB</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">CUDA cores</dt><dd class="text-slate-200">6,912</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">CPUs</dt><dd class="text-slate-200 text-right">2× AMD EPYC 7313 · 3.0 GHz</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">Cores / threads</dt><dd class="text-slate-200">32 / 64</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">Memory</dt><dd class="text-slate-200">512 GiB</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">CUDA · compute</dt><dd class="text-slate-200">12.0 · 8.0</dd></div></dl></article>
+      <article class="card p-5"><h3 class="font-mono text-sm font-semibold text-cyan-400">Dell Precision 3680</h3><p class="text-[11px] text-slate-400">Development and inference workstation</p>
+        <dl class="mt-3 space-y-1.5 text-xs"><div class="flex justify-between gap-3"><dt class="text-slate-400">GPU</dt><dd class="text-slate-200 text-right">NVIDIA RTX 4000 Ada · 20 GB</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">CUDA cores</dt><dd class="text-slate-200">6,144</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">CPU</dt><dd class="text-slate-200 text-right">Core i9-14900K · up to 6.0 GHz</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">Cores / threads</dt><dd class="text-slate-200">24 / 32</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">Memory</dt><dd class="text-slate-200">128 GiB</dd></div><div class="flex justify-between gap-3"><dt class="text-slate-400">CUDA · compute</dt><dd class="text-slate-200">13.0 · 8.9</dd></div></dl></article>
+    </div>
+    <p class="mt-3 text-[11px] text-slate-400">Also: CPU-only PowerEdge R7525 nodes (2× EPYC 7313, 512–1,024 GiB) for feature engineering, tree ensembles and backtests. Shared cluster; jobs are scheduled.</p>
+  </section>
   <section id="models" class="max-w-5xl mx-auto px-4 pb-16">
-    <h2 class="text-2xl font-bold tracking-tight">180-Second Competing Model Suite</h2>
-    <p class="mt-1 text-slate-400 text-sm">All three model families evaluate the exact same spread-adjusted triple-barrier target (τ = 180s).</p>
+    <h2 class="text-2xl font-bold tracking-tight">Competing Model Suite</h2>
+    <p class="mt-1 text-slate-400 text-sm">All three model families evaluate the same spread-adjusted triple-barrier target over a configurable prediction horizon (τ, default 180s).</p>
     <div id="mod" class="mt-6 grid md:grid-cols-3 gap-4"></div>
   </section>
 
