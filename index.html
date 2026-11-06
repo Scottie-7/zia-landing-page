@@ -62,7 +62,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       <span>Sonar v1.2: Machine Learning Engine</span>
     </div>
     <h1 class="text-4xl md:text-5xl font-bold tracking-tight leading-tight">Machine Learning Models Engineered For Your Trading Strategies</h1>
-    <p class="mt-5 text-slate-400 text-base md:text-lg max-w-3xl mx-auto leading-relaxed">Deploy institutional-grade deep learning models tuned to your own strategy, risk profile, and capital allocation. Level 1–3 multi-venue order-book reconstruction at 100ms resolution, configurable prediction horizons, proprietary algorithmic order book order flow & heatmap visualization & analysis tool access, and live model decision access for retail and institutional traders.</p>
+    <p class="mt-5 text-slate-400 text-base md:text-lg max-w-3xl mx-auto leading-relaxed">Deploy customizable Ai models and access high-resolution market microstructure intelligence. From multi-venue order-book reconstruction to proprietary order-flow analytics and live model signals & access, bring institutional-grade quantitative analysis tools into your trading workflow.</p>
     <div class="mt-8 flex justify-center gap-3">
       <a href="login.html" class="rounded-md bg-cyan-500 px-5 py-2.5 font-semibold text-slate-950 hover:bg-cyan-400 transition">Launch Terminal</a>
       <a href="#architecture" class="rounded-md border border-slate-700 px-5 py-2.5 font-semibold text-slate-300 hover:bg-slate-800 transition">View Architecture</a>
@@ -169,7 +169,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       <div data-panel="latency" class="card col-span-12 lg:col-span-4 p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Pipeline Latency Waterfall</h2><div id="lat" class="mt-2 px-1"></div></div>
       <div data-panel="evalb" class="card col-span-12 p-2">
         <div class="flex flex-wrap items-center gap-2 px-1 pb-2 border-b border-slate-800">
-          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Model Evaluation Board</h2><span class="text-[10px] font-mono text-amber-400 bg-amber-950/40 border border-amber-800/50 px-2 py-0.5 rounded">Sample values · pending first data pull</span>
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Model Evaluation Board</h2><span class="text-[10px] font-mono text-amber-400 bg-amber-950/40 border border-amber-800/50 px-2 py-0.5 rounded">Sample values · Live lvl. 2-3 data requires paid subscription</span>
           <div id="ev-tabs" class="ml-auto flex gap-1"><button class="btn on" data-m="XGB">RF / XGBoost</button><button class="btn" data-m="LSTM">LSTM-Attention</button><button class="btn" data-m="DLOB">DeepLOB</button></div>
         </div>
         <div id="evalb-body" class="mt-3 px-1"></div>
@@ -182,7 +182,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     <div class="card p-4 relative overflow-hidden bg-slate-900/90 border-cyan-500/40">
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
         <div class="flex items-center gap-2">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-100">Autonomous AI Trade Decision Engine & Strategy Optimizer</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-100">ML AI Trading Engine & Strategy Optimizer</h2>
           <div class="flex flex-wrap items-center gap-2"><span class="text-[10px] font-mono text-slate-400">Prediction horizon</span><div id="hz" class="flex gap-1" role="group" aria-label="Prediction horizon"><button class="btn" data-h="30">30s</button><button class="btn" data-h="60">60s</button><button class="btn on" data-h="180">180s</button><button class="btn" data-h="300">300s</button><button class="btn" data-h="900">900s</button></div><label class="flex items-center gap-1 text-[10px] font-mono text-slate-400">Barrier k <input id="kk" type="range" min="0.5" max="2" step="0.1" value="1" class="w-20 accent-cyan-400"><output id="kv" class="text-cyan-400">1.0</output></label></div>
         </div>
         <div class="flex items-center gap-2">

@@ -182,7 +182,7 @@ $("f").onsubmit = async e => {
         body: JSON.stringify({email: $("email").value, password: $("pw").value})
       });
       if (r.ok) { location.href = "/dashboard"; return; }
-      msg = r.status === 401 ? "Invalid email or password." : "Sign-in unavailable right now. Try again shortly.";
+      msg = r.status === 401 ? "Invalid email or password." : "Sign-in failed. Unrecognized account-please request access, sign up, then subscribe to mkt. data for live terminal access.";
     } catch { 
       msg = "Account authentication failed: Provided email is not registered as an active client."; 
     }
