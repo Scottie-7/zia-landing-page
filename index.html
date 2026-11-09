@@ -31,6 +31,46 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 <!-- Active Quantum Plexus Background Animation Canvas -->
 <canvas id="bg-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
 
+<!-- Collapsible side dock: Live Market Movers + Pipeline Latency mini box -->
+<aside id="dock" aria-label="Side tools">
+  <div id="dock-rail"><button class="dk-tab" data-dock="movers" aria-expanded="false" title="Live market movers">Movers</button><button class="dk-tab" data-dock="lat" aria-expanded="false" title="Pipeline latency">Latency</button></div>
+  <div id="dock-panel" aria-hidden="true">
+    <section class="dk-sec" data-dk="movers">
+      <div class="flex items-center gap-2 px-2 py-1.5 border-b border-slate-800"><h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Live Market Movers</h2><button class="btn ml-auto font-mono" data-dock="movers" aria-label="Collapse market movers">–</button></div>
+      <div class="h-[420px] w-full overflow-hidden rounded">
+        <!-- TradingView Hotlists Widget BEGIN -->
+          <div class="tradingview-widget-container" style="height:100%;width:100%">
+            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-hotlists.js" async>
+            {
+              "colorTheme": "dark",
+              "dateRange": "12M",
+              "exchange": "US",
+              "showChart": true,
+              "locale": "en",
+              "width": "100%",
+              "height": "100%",
+              "defaultScreen": "change_gainers",
+              "plotLineColorGrowing": "rgba(16, 185, 129, 1)",
+              "plotLineColorFalling": "rgba(244, 63, 94, 1)",
+              "gridLineColor": "rgba(30, 41, 59, 1)",
+              "scaleFontColor": "rgba(148, 163, 184, 1)",
+              "belowLineFillColorGrowing": "rgba(16, 185, 129, 0.12)",
+              "belowLineFillColorFalling": "rgba(244, 63, 94, 0.12)",
+              "symbolClearColor": "rgba(255, 255, 255, 1)"
+            }
+            </script>
+          </div>
+          <!-- TradingView Hotlists Widget END -->
+      </div>
+    </section>
+    <section class="dk-sec" data-dk="lat">
+      <div class="flex items-center gap-2 px-2 py-1.5 border-b border-slate-800"><h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Pipeline Latency</h2><span class="text-[9px] text-slate-500">sample timings</span><button class="btn ml-auto font-mono" data-dock="lat" aria-label="Collapse latency">–</button></div>
+      <div id="lat" class="px-2 py-2"></div>
+    </section>
+  </div>
+</aside>
+
 <div class="relative z-10 flex flex-col min-h-screen">
 <header class="sticky top-0 z-50 border-b border-slate-800 bg-[#080C14]/90 backdrop-blur">
   <div class="max-w-[1440px] mx-auto px-4 h-16 flex items-center justify-between gap-6">
@@ -83,39 +123,8 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     </div>
 
     <div data-grid="preview" class="grid grid-cols-12 gap-3 items-stretch">
-      <!-- Live TradingView Market Movers Panel -->
-      <div data-panel="movers" class="card col-span-12 lg:col-span-3 flex flex-col p-2">
-        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 mb-2">Live Market Movers</h2>
-        <div class="h-[600px] w-full overflow-hidden rounded">
-          <!-- TradingView Hotlists Widget BEGIN -->
-          <div class="tradingview-widget-container" style="height:100%;width:100%">
-            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-hotlists.js" async>
-            {
-              "colorTheme": "dark",
-              "dateRange": "12M",
-              "exchange": "US",
-              "showChart": true,
-              "locale": "en",
-              "width": "100%",
-              "height": "100%",
-              "defaultScreen": "change_gainers",
-              "plotLineColorGrowing": "rgba(16, 185, 129, 1)",
-              "plotLineColorFalling": "rgba(244, 63, 94, 1)",
-              "gridLineColor": "rgba(30, 41, 59, 1)",
-              "scaleFontColor": "rgba(148, 163, 184, 1)",
-              "belowLineFillColorGrowing": "rgba(16, 185, 129, 0.12)",
-              "belowLineFillColorFalling": "rgba(244, 63, 94, 0.12)",
-              "symbolClearColor": "rgba(255, 255, 255, 1)"
-            }
-            </script>
-          </div>
-          <!-- TradingView Hotlists Widget END -->
-        </div>
-      </div>
-
       <!-- Chart Panel -->
-      <div data-panel="chart" class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
+      <div data-panel="chart" class="card col-span-12 lg:col-span-5 p-2 flex flex-col">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pb-2 border-b border-slate-800/80">
           <span id="csym" class="mono font-semibold text-sm text-cyan-400">ONEG · 1m</span>
           <span id="ohlc" class="mono text-[11px] text-slate-400">TradingView Advanced Real-Time Chart</span>
@@ -124,6 +133,15 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
           <div id="tradingview_chart" class="w-full h-full"></div>
         </div>
         <p class="px-1 pt-1 text-[10px] text-slate-500 border-t border-slate-800/50 mt-auto">Chart powered by <a class="underline hover:text-slate-400" href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView Advanced Real-Time Chart™</a></p>
+      </div>
+
+      <!-- Level 2-3 Order Book Reconstruction Panel -->
+      <div data-panel="recon" class="card col-span-12 lg:col-span-4 p-2 flex flex-col">
+        <div class="flex items-center justify-between px-1 pb-1 border-b border-slate-800">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">L2–L3 Book Reconstruction</h2>
+          <span class="text-[10px] text-cyan-400 font-mono">100ms Grid</span>
+        </div>
+        <div id="recon" class="mt-2 flex-1 text-[10px]"></div>
       </div>
 
       <!-- Level 2 DOM & Tape Panel -->
@@ -148,25 +166,23 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
   <!-- Advanced Order Flow Workspace (panels can be dragged / resized in Edit layout mode) -->
   <section id="flow" aria-label="Order flow analytics" class="max-w-[1440px] mx-auto px-4 pb-6">
     <div data-grid="flow" class="grid grid-cols-12 gap-3 items-stretch">
-      <div data-panel="heat" class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
+      <div data-panel="heat" class="card col-span-12 lg:col-span-8 p-2 flex flex-col">
         <div class="flex flex-wrap items-center gap-2 px-1 pb-2 border-b border-slate-800">
           <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Liquidity Heatmap</h2><span id="heat-sym" class="mono text-[11px] text-cyan-400"></span>
           <button class="btn ml-auto font-mono" data-sub>Venues <span data-vcount>2/12</span> · Add data</button>
         </div>
-        <div class="relative mt-2 flex-1 min-h-[280px]"><canvas id="heat" class="absolute inset-0 w-full h-full" role="img" aria-label="Liquidity heatmap with trade bubbles and horizon barriers"></canvas></div>
-        <p class="px-1 pt-1.5 mt-2 text-[10px] text-slate-400 border-t border-slate-800/50">Cyan = resting size (selected venues, aggregated) · bubbles = prints by Lee-Ready side · ◆ cyan +1 iceberg absorption, amber −1 unexecuted depletion · dashed = horizon barriers</p>
+        <div class="relative mt-1.5 flex-1 min-h-[170px]"><canvas id="heat" class="absolute inset-0 w-full h-full" role="img" aria-label="Liquidity heatmap with trade bubbles and horizon barriers"></canvas></div>
+        <p class="px-1 pt-1.5 mt-2 text-[10px] text-slate-400 border-t border-slate-800/50">Green = bids below price, red = asks above (brighter and thicker = more resting size, selected venues) · blue line = current price · bubbles = prints by Lee-Ready side · ◆ cyan +1 iceberg absorption, amber −1 unexecuted depletion · dashed = horizon barriers</p>
       </div>
-      <div data-panel="spectro" class="card col-span-12 lg:col-span-6 p-2 flex flex-col">
+      <div data-panel="feat" class="card col-span-12 lg:col-span-4 lg:row-span-2 p-2 flex flex-col"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Microstructure Features</h2><div id="feat" class="grid grid-cols-2 gap-1.5 mt-1.5"></div><div class="mt-2 flex-1 min-h-[72px] rounded border border-dashed border-slate-700/80 grid place-items-center text-[10px] font-mono text-slate-500">Reserved · next tool</div></div>
+      <div data-panel="spectro" class="card col-span-12 lg:col-span-8 p-2 flex flex-col">
         <div class="flex flex-wrap items-center gap-2 px-1 pb-2 border-b border-slate-800">
-          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Order-Flow Spectrogram</h2><span class="mono text-[11px] text-cyan-400">level Δ size</span>
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Order-Flow Spectrogram</h2><span class="mono text-[11px] text-cyan-400">price-level Δ size</span>
           <button class="btn ml-auto font-mono" data-sub>Venues <span data-vcount>2/12</span> · Add data</button>
         </div>
-        <div class="relative mt-2 flex-1 min-h-[280px]"><canvas id="spec" class="absolute inset-0 w-full h-full" role="img" aria-label="Order flow spectrogram of liquidity added and removed per book level"></canvas></div>
-        <p class="px-1 pt-1.5 mt-2 text-[10px] text-slate-400 border-t border-slate-800/50">Rows = book levels (asks on top, bids below) · columns = 2 s steps · cyan = liquidity added, amber = liquidity removed</p>
+        <div class="relative mt-1.5 flex-1 min-h-[170px]"><canvas id="spec" class="absolute inset-0 w-full h-full" role="img" aria-label="Order flow spectrogram of liquidity added and removed per book level"></canvas></div>
+        <p class="px-1 pt-1.5 mt-2 text-[10px] text-slate-400 border-t border-slate-800/50">Y-axis = price (same scale as the book) · red = size added on asks (sell pressure), green = size added on bids (buy pressure) · brighter and thicker = bigger change · amber = liquidity pulled · blue line = current price · columns = 2 s steps</p>
       </div>
-      <div data-panel="feat" class="card col-span-12 md:col-span-6 lg:col-span-4 p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Microstructure Features</h2><div id="feat" class="grid grid-cols-2 gap-2 mt-2"></div></div>
-      <div data-panel="funnel" class="card col-span-12 md:col-span-6 lg:col-span-4 p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Promotion Funnel</h2><div id="funnel" class="mt-2 px-1"></div></div>
-      <div data-panel="latency" class="card col-span-12 lg:col-span-4 p-2"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Pipeline Latency Waterfall</h2><div id="lat" class="mt-2 px-1"></div></div>
       <div data-panel="evalb" class="card col-span-12 p-2">
         <div class="flex flex-wrap items-center gap-2 px-1 pb-2 border-b border-slate-800">
           <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Model Evaluation Board</h2><span class="text-[10px] font-mono text-amber-400 bg-amber-950/40 border border-amber-800/50 px-2 py-0.5 rounded">Sample values - Lvl. 2-3 data purchase required</span>

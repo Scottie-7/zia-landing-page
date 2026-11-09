@@ -1,5 +1,5 @@
 /* Sonar Pro v2: aggregated back-to-back ladder + venue/tier settings, liquidity heatmap, order-flow spectrogram,
-   barrier forecast (configurable horizon), features, promotion funnel, evaluation board, latency waterfall,
+   barrier forecast (configurable horizon), features, L2-L3 book reconstruction, evaluation board, side-dock latency box + market movers,
    command palette, drag/resize layout, subscription request flow. Everything follows one ticker via the "sonar:tick" event.
    Add ?pro to the URL to preview every venue and L3 unlocked (sample data). */
 (() => {
@@ -17,7 +17,7 @@ const LS = (k, v) => { try { if (v === undefined) return JSON.parse(localStorage
 /* ---- Venue catalog. c = placeholder estimate in USD/month for Level 2 (edit freely); free = included in the free preview ---- */
 const VEN = [{id: "NSDQ", n: "Nasdaq", c: 15, free: 1}, {id: "ARCA", n: "NYSE Arca", c: 15, free: 1}, {id: "NYSE", n: "NYSE", c: 20}, {id: "AMEX", n: "NYSE American", c: 10}, {id: "BZX", n: "Cboe BZX", c: 12}, {id: "BYX", n: "Cboe BYX", c: 8}, {id: "EDGX", n: "Cboe EDGX", c: 12}, {id: "EDGA", n: "Cboe EDGA", c: 8}, {id: "IEX", n: "IEX", c: 6}, {id: "MEMX", n: "MEMX", c: 10}, {id: "BX", n: "Nasdaq BX", c: 8}, {id: "PSX", n: "Nasdaq PSX", c: 8}];
 const TIER = {L1: {n: "Level 1", m: .3, d: "NBBO quotes and trades"}, L2: {n: "Level 2", m: 1, d: "Price-level depth by venue"}, L3: {n: "Level 3", m: 2.5, d: "Order-level (MBO) reconstruction"}};
-const G = {sym: "", hz: 180, k: 1, sel: new Set(["NSDQ", "ARCA"]), tier: "L2", flip: false, pop: false};
+const G = {sym: "", hz: 180, k: 1, sel: new Set(["NSDQ", "ARCA"]), tier: "L2", flip: false, pop: false, rv: "L2"};
 const nm = k => (VEN.find(v => v.id === k) || {n: k}).n, isLocked = v => !v.free && !PRO;
 const est = (ids, t) => [...ids].reduce((s, id) => { const v = VEN.find(x => x.id === id); return s + (v.free && t !== "L3" ? 0 : v.c * TIER[t].m); }, 0);
 let LAST = null;
@@ -44,6 +44,16 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 .editbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;padding:2px 6px;border-radius:4px;background:#083344;font:600 10px "JetBrains Mono",monospace;color:#00F0FF}
 .grip{cursor:grab}.editbar button{padding:0 8px;border:1px solid #0e7490;border-radius:3px;margin-left:4px}
 @keyframes syn{from{box-shadow:0 0 0 1px #00F0FF,0 0 18px rgba(0,240,255,.35)}to{box-shadow:0 0 0 0 transparent}}.sync-flash{animation:syn .8s ease-out}
+.rr{display:grid;grid-template-columns:52px 1fr 54px;align-items:center;gap:4px;height:15px;font:10px "JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+.rr b{text-align:right;font-weight:600}.rr.bid b{color:#10B981}.rr.ask b{color:#fb7185}.rr u{text-decoration:none;color:#e2e8f0;text-align:right;white-space:nowrap}
+.rr .bar{display:flex;height:9px;overflow:hidden;border-radius:1px}.rr .bar i{height:100%;min-width:1px;border-right:1px solid #080C14}
+#dock{position:fixed;left:0;top:4.5rem;bottom:0;z-index:40;pointer-events:none}
+#dock-rail{pointer-events:auto;position:absolute;left:0;top:0;display:flex;flex-direction:column;gap:4px}
+.dk-tab{writing-mode:vertical-rl;transform:rotate(180deg);padding:10px 4px;border:1px solid #334155;border-left:0;border-radius:0 6px 6px 0;background:#0b1220;font:600 10px "JetBrains Mono",monospace;color:#94A3B8}
+.dk-tab.on{background:#083344;color:#00F0FF;border-color:#0e7490}
+#dock-panel{pointer-events:auto;position:absolute;left:26px;top:0;width:min(300px,calc(100vw - 40px));max-height:calc(100vh - 5rem);overflow-y:auto;padding:8px 8px 0;border:1px solid #1e293b;border-radius:0 8px 8px 0;background:rgba(8,12,20,.96);backdrop-filter:blur(10px);box-shadow:8px 0 30px rgba(0,0,0,.5);transform:translateX(-110%);visibility:hidden;transition:transform .2s,visibility 0s .2s}
+#dock-panel.open{transform:none;visibility:visible;transition:transform .2s}
+.dk-sec{margin-bottom:8px;overflow:hidden;max-height:540px;border:1px solid #1e293b;border-radius:6px;background:rgba(15,23,42,.7);transition:max-height .2s}.dk-sec.shut{max-height:0;margin:0;border-width:0}
 </style>`);
 
 /* ---------- Aggregation across selected venues ---------- */
@@ -106,7 +116,7 @@ ${cls.map(([n, v, bg, tc]) => `<div class="flex items-center gap-2"><span class=
 /* ---------- Microstructure features ---------- */
 const side = (A, bid) => { const a = (bid ? A.bids : A.asks).slice(0, 10); return {m: new Map(a.map(l => [l.price, l.size])), p10: a[a.length - 1].price}; };
 const ofi = (a, c, bid) => { let t = 0; new Set([...a.m.keys(), ...c.m.keys()]).forEach(p => { const beyond = lim => bid ? p < lim : p > lim; if (!a.m.has(p) && beyond(a.p10)) return; if (!c.m.has(p) && beyond(c.p10)) return; t += (c.m.get(p) || 0) - (a.m.get(p) || 0); }); return t; }; // entry/exit guards
-const spark = (a, c) => { if (a.length < 2) return ""; const mn = Math.min(...a), mx = Math.max(...a), r = mx - mn || 1; return `<svg viewBox="0 0 100 22" class="w-full h-5" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="${c}" stroke-width="1.5" vector-effect="non-scaling-stroke" points="${a.map((v, i) => `${(i / (a.length - 1) * 100).toFixed(1)},${(20 - (v - mn) / r * 18).toFixed(1)}`).join(" ")}"/></svg>`; };
+const spark = (a, c) => { if (a.length < 2) return ""; const mn = Math.min(...a), mx = Math.max(...a), r = mx - mn || 1; return `<svg viewBox="0 0 100 22" class="w-full h-4" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="${c}" stroke-width="1.5" vector-effect="non-scaling-stroke" points="${a.map((v, i) => `${(i / (a.length - 1) * 100).toFixed(1)},${(20 - (v - mn) / r * 18).toFixed(1)}`).join(" ")}"/></svg>`; };
 const FD = [["mlofi", "MLOFI · 10 lvl", v => cmp.format(v), 1], ["mdiv", "Micro-price div", v => f(v, 1) + " bps", 1], ["air", "AIR · venue", v => f(v, 2), 0], ["svd", "Signed vol Δ", v => cmp.format(v), 1], ["rvol", "RVOL", v => f(v, 1) + "x", 0], ["sprd", "Spread", v => f(v, 0) + " bps", 0]];
 const F = {sym: "", prev: null, h: {}};
 function features(d) {
@@ -118,19 +128,34 @@ function features(d) {
   push("air", (d.book.events || []).some(e => e.type[0] === "i") ? 1 + Math.random() : Math.random() * .6); // sample; backend supplies AIR_v
   push("svd", (d.tape || []).reduce((s, x) => s + (x.side === "buy" ? x.size : -x.size), 0));
   push("rvol", 1.2 + (hs(d.sym) % 60) / 10 + (Math.random() - .5) * .3);
-  el.innerHTML = FD.map(([k, n, fm, sg]) => { const a = F.h[k], v = a[a.length - 1], c = sg && v < 0 ? "#F59E0B" : sg ? "#10B981" : "#00F0FF"; return `<div class="bg-slate-950/80 border border-slate-800 rounded p-2"><div class="text-[10px] text-slate-400">${n}</div><div class="mono text-sm font-semibold" style="color:${c}">${v === undefined ? "–" : fm(v)}</div>${spark(a, c)}</div>`; }).join("");
+  el.innerHTML = FD.map(([k, n, fm, sg]) => { const a = F.h[k], v = a[a.length - 1], c = sg && v < 0 ? "#F59E0B" : sg ? "#10B981" : "#00F0FF"; return `<div class="bg-slate-950/80 border border-slate-800 rounded px-2 py-1"><div class="text-[10px] text-slate-400">${n}</div><div class="mono text-sm font-semibold" style="color:${c}">${v === undefined ? "–" : fm(v)}</div>${spark(a, c)}</div>`; }).join("");
 }
 
-/* ---------- Promotion funnel ---------- */
-function funnel(d) {
-  const el = $("#funnel"); if (!el) return;
-  const mid = tob(d.A).mid, rest = [...d.A.bids, ...d.A.asks].filter(l => Math.abs(l.price - mid) / mid <= .01).reduce((s, l) => s + l.price * l.size, 0);
-  const pct = Sonar.base(d.sym)[2], rv = 1.2 + (hs(d.sym) % 60) / 10, dw = 600 - Math.floor(Date.now() / 1000) % 600;
-  const checks = [["Move ≥ 5.0%", pct >= 5, f(pct, 2) + "%"], ["RVOL ≥ 2.0", rv >= 2, f(rv, 1) + "x"], ["Resting ≥ $15k within ±1%", rest >= 15000, "$" + cmp.format(rest)]], ok = checks.every(c => c[1]);
-  el.innerHTML = [["Universe · $1M–$1B", 4812, 100], ["Tier 1 · L1", 412, 72], ["Tier 2 · L1 + book", 62, 44], ["Tier 3 · top-3 + depth", 3, 18]].map(([n, c, w]) => `<div class="mb-1.5"><div class="flex justify-between text-[10px] text-slate-400"><span>${n}</span><span class="mono text-slate-200">${c.toLocaleString()}</span></div><div class="h-1.5 rounded bg-slate-800"><div class="h-1.5 rounded bg-cyan-500/70" style="width:${w}%"></div></div></div>`).join("")
-  + `<div class="mt-3 flex items-center justify-between"><span class="mono text-xs font-semibold text-slate-100">${d.sym}</span><span class="rounded px-2 py-0.5 text-[10px] font-mono border ${ok ? "text-cyan-400 border-cyan-800 bg-cyan-950/60" : "text-slate-300 border-slate-700 bg-slate-900"}">${ok ? "Tier 2 eligible" : "Tier 1 only"}</span></div>`
-  + checks.map(([n, p, v]) => `<div class="mt-1 flex items-center justify-between text-[11px]"><span class="${p ? "text-emerald-400" : "text-rose-400"}">${p ? "✓" : "✕"} <span class="text-slate-300">${n}</span></span><span class="mono text-slate-200">${v}</span></div>`).join("")
-  + `<div class="mt-3 flex justify-between text-[10px] text-slate-400"><span>Moomoo slots</span><span class="mono text-slate-200">62 / 100</span></div><div class="h-1.5 rounded bg-slate-800"><div class="h-1.5 rounded bg-indigo-400/70" style="width:62%"></div></div><div class="mt-2 flex justify-between text-[10px] text-slate-400"><span>Dwell lock</span><span class="mono text-slate-200">${dw} s of 600 s</span></div>`;
+/* ---------- Level 2-3 order book reconstruction: venue-stacked depth + order queues (L3 = sample MBO until backend feed) ---------- */
+const VC = ["#38BDF8", "#A78BFA", "#F472B6", "#FBBF24", "#34D399", "#FB923C", "#60A5FA", "#C084FC", "#2DD4BF", "#F87171", "#A3E635", "#E879F9"], vcol = id => VC[VEN.findIndex(v => v.id === id)] || "#94A3B8";
+function recon(d) {
+  const el = $("#recon"); if (!el) return;
+  const A = d.A, N = 10, t = tob(A), dd = dec(d.book.mid), evs = d.book.events || [], bids = A.bids.slice(0, N), asks = A.asks.slice(0, N), L3 = G.rv === "L3";
+  const mx = Math.max(1, ...bids.map(l => l.size), ...asks.map(l => l.size)), bT = sum(bids), aT = sum(asks), im = (bT - aT) / ((bT + aT) || 1), mc = Math.max(bT, aT, 1);
+  const pmin = bids[bids.length - 1].price, pmax = asks[asks.length - 1].price, X = p => ((p - pmin) / ((pmax - pmin) || 1) * 300).toFixed(1), Y = c => (96 - c / mc * 90).toFixed(1);
+  const area = (L, col) => { let c = 0; const pts = []; L.forEach((l, i) => { if (i) pts.push([X(l.price), Y(c)]); c += l.size; pts.push([X(l.price), Y(c)]); }); const e = pts[pts.length - 1]; return `<polygon points="${[[pts[0][0], 100], ...pts, [e[0], 100]].join(" ")}" fill="${col}" fill-opacity=".28" stroke="${col}" stroke-width="1.2" vector-effect="non-scaling-stroke"/>`; };
+  const segs = l => Object.entries(l.v).map(([k, s]) => { if (!L3) return `<i style="flex:${s};background:${vcol(k)}" title="${nm(k)} ${s.toLocaleString()}"></i>`; const r = rng(hs(k + l.price)), n = 1 + Math.floor(r() * Math.min(5, 1 + s / 400)), w = Array.from({length: n}, () => .3 + r()), W2 = w.reduce((a, c) => a + c, 0); return w.map((q, i) => `<i style="flex:${s * q / W2};background:${vcol(k)};opacity:${i % 2 ? .62 : 1}" title="${nm(k)} order ${i + 1}/${n} · ~${Math.round(s * q / W2 / 100) * 100}"></i>`).join(""); }).join("");
+  const row = (side, l) => { const e = evs.find(x => x.side === side && Math.abs(x.price - l.price) < 1e-6), ice = e && e.type[0] === "i"; return `<div class="rr ${side}"><b>${f(l.price, dd)}</b><span><span class="bar" style="width:${(l.size / mx * 100).toFixed(1)}%">${segs(l)}</span></span><u>${e ? `<em class="ev ${ice ? "cy" : "am"}" title="${TIP[e.type]}">${ice ? "+1" : "−1"}</em> ` : ""}${cmp.format(l.size)}</u></div>`; };
+  const tabs = ["L2", "L3"].map(k => `<button class="btn ${G.rv === k ? "on" : ""}" data-rv="${k}" title="${TIER[k].d}">${k}${k === "L3" && !PRO ? " " + LOCK : ""}</button>`).join("");
+  const tot = Object.entries(A.V).map(([k, v]) => [k, sum(v.bids.slice(0, N)) + sum(v.asks.slice(0, N))]), all = tot.reduce((s, x) => s + x[1], 0) || 1;
+  el.innerHTML = `<div class="flex items-center justify-between"><div class="flex gap-1">${tabs}</div><span class="text-slate-400">${L3 ? "Order queues (sample MBO)" : "Depth by venue"} · 10 levels</span></div>
+<div class="mt-2 flex justify-between mono"><span class="text-emerald-400">Bid ${cmp.format(bT)}</span><span class="${im >= 0 ? "text-emerald-400" : "text-rose-400"}">Imbalance ${im >= 0 ? "+" : ""}${(im * 100).toFixed(0)}%</span><span class="text-rose-400">Ask ${cmp.format(aT)}</span></div>
+<svg viewBox="0 0 300 100" preserveAspectRatio="none" class="mt-1 w-full h-[120px] rounded border border-slate-800 bg-slate-950/70" role="img" aria-label="Cumulative bid and ask depth">${area(bids, "#10B981")}${area(asks, "#F43F5E")}<line x1="${X(t.mid)}" x2="${X(t.mid)}" y1="0" y2="100" stroke="#38BDF8" stroke-width="1.6" vector-effect="non-scaling-stroke" style="filter:drop-shadow(0 0 3px #38BDF8)"/></svg>
+<div class="flex justify-between mono text-[9px] text-slate-500"><span>${f(pmin, dd)}</span><span class="text-sky-400">${f(t.mid, dd + 1)}</span><span>${f(pmax, dd)}</span></div>
+<div class="mt-1.5">${asks.slice().reverse().map(l => row("ask", l)).join("")}<div class="mid2">Spread ${f(t.ba - t.bb, dd)} · Micro ${f(t.micro, dd + 1)}</div>${bids.map(l => row("bid", l)).join("")}</div>
+<div class="mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[9px] text-slate-400">${tot.sort((a, c) => c[1] - a[1]).map(([k, v]) => `<span><b style="color:${vcol(k)}">■</b> ${nm(k)} ${(v / all * 100).toFixed(0)}%</span>`).join("")}</div>`;
+}
+/* glowing current-price line + axis tag + buy/sell pressure bar, shared by heatmap and spectrogram */
+function curLine(x, w, aw, ym, mid, dd, bT, aT, lb) {
+  x.save(); x.shadowColor = "#38BDF8"; x.shadowBlur = 12; x.strokeStyle = "#38BDF8"; x.lineWidth = 1.6; x.beginPath(); x.moveTo(0, ym); x.lineTo(w - aw, ym); x.stroke(); x.restore();
+  x.fillStyle = "#38BDF8"; x.fillRect(w - aw + 1, ym - 7, aw - 2, 14); x.fillStyle = "#020617"; x.fillText(f(mid, dd), w - aw + 4, ym + 3);
+  const tt = bT + aT || 1, bw = 90 * bT / tt; x.fillStyle = "#10B981"; x.fillRect(6, 6, bw, 4); x.fillStyle = "#F43F5E"; x.fillRect(6 + bw, 6, 90 - bw, 4);
+  x.fillStyle = "#cbd5e1"; x.fillText(`${lb[0]} ${(bT / tt * 100).toFixed(0)}% · ${lb[1]} ${(aT / tt * 100).toFixed(0)}%`, 102, 11);
 }
 
 /* ---------- Liquidity heatmap ---------- */
@@ -161,10 +186,13 @@ function heat() {
   const aw = 54, hw = (w - aw) * .72, fw = w - aw - hw, cw = hw / 90, Y = p => 6 + (h - 12) * (1 - (p - pmin) / (pmax - pmin)), ch = Math.max(2, (h - 12) * tk / (pmax - pmin)), X = n => hw - (last.n - n + 1) * cw;
   const ks = c => Object.keys(c.L).filter(k => G.sel.has(k)), dd = dec(mid), p = H.p || {p_down: .3, p_neutral: .4, p_up: .3};
   let mx = 1; H.cols.forEach(c => ks(c).forEach(k => c.L[k].forEach(l => { mx = Math.max(mx, l.size * tkp(l.price)); })));
-  H.cols.forEach(c => ks(c).forEach(k => c.L[k].forEach(l => { const a = Math.sqrt(l.size * tkp(l.price) / mx); if (a < .05) return; x.fillStyle = `rgba(0,240,255,${(.06 + .8 * a).toFixed(2)})`; x.fillRect(X(c.n), Y(l.price) - ch / 2, cw + .5, ch); })));
+  H.cols.forEach(c => ks(c).forEach(k => c.L[k].forEach(l => { const a = Math.sqrt(l.size * tkp(l.price) / mx); if (a < .05) return; const hh = ch * (.55 + .85 * a); x.fillStyle = l.price >= c.mid ? `hsla(${(18 - 18 * a).toFixed(0)},92%,${(46 + 10 * a).toFixed(0)}%,${(.12 + .8 * a).toFixed(2)})` : `hsla(${(168 - 30 * a).toFixed(0)},78%,${(36 + 14 * a).toFixed(0)}%,${(.12 + .8 * a).toFixed(2)})`; x.fillRect(X(c.n), Y(l.price) - hh / 2, cw + .5, hh); })));
   x.lineWidth = 1; x.fillStyle = "#94A3B8";
   for (let i = 0; i <= 4; i++) { const pr = pmin + (pmax - pmin) * i / 4, y = Y(pr); x.strokeStyle = "rgba(30,41,59,.8)"; x.beginPath(); x.moveTo(0, y); x.lineTo(w - aw, y); x.stroke(); x.fillText(f(pr, dd), w - aw + 6, y + 3); }
   x.strokeStyle = "rgba(248,250,252,.75)"; x.lineWidth = 1.2; x.beginPath(); H.cols.forEach((c, i) => { const px = X(c.n) + cw / 2; i ? x.lineTo(px, Y(c.mid)) : x.moveTo(px, Y(c.mid)); }); x.stroke();
+  const pf = new Map(); ks(last).forEach(k => last.L[k].forEach(l => pf.set(l.price, (pf.get(l.price) || 0) + l.size))); const pm = Math.max(1, ...pf.values()); let bT = 0, aT = 0;
+  pf.forEach((s, pr) => { const ask = pr >= mid, bw = s / pm * 44; if (ask) aT += s; else bT += s; x.fillStyle = ask ? "rgba(244,63,94,.55)" : "rgba(16,185,129,.55)"; x.fillRect(w - aw - bw, Y(pr) - ch / 2, bw, Math.max(1.5, ch - .5)); });
+  curLine(x, w, aw, Y(mid), mid, dd, bT, aT, ["Buy", "Sell"]);
   H.bub.forEach(q => { x.fillStyle = q.side === "buy" ? "rgba(16,185,129,.75)" : "rgba(245,158,11,.75)"; x.beginPath(); x.arc(X(q.n) + cw / 2, Y(q.price), 2 + Math.sqrt(q.size / 100) * 1.1, 0, 7); x.fill(); });
   H.ev.forEach(e => { const cx = X(e.n) + cw / 2, cy = Y(e.price); x.fillStyle = e.type[0] === "i" ? "#00F0FF" : "#F59E0B"; x.beginPath(); x.moveTo(cx, cy - 5); x.lineTo(cx + 5, cy); x.lineTo(cx, cy + 5); x.lineTo(cx - 5, cy); x.fill(); });
   const yu = Y(bar.up), yl = Y(bar.lo);
@@ -177,23 +205,33 @@ function heat() {
   x.fillStyle = "#94A3B8"; x.fillText("−180s", 4, h - 4); x.fillText("now", hw - 22, h - 4); x.fillText(`+${G.hz}s`, w - aw - 40, h - 4);
 }
 
-/* ---------- Order-flow spectrogram: per-level change in aggregated resting size ---------- */
+/* ---------- Order-flow spectrogram: per-price-level change in resting size, plotted on the live price axis ---------- */
 const SP = {cols: [], prev: null, sym: ""};
 function specIngest(d) {
-  const pad = a => Array.from({length: 10}, (_, i) => a[i] ? a[i].size : 0), cur = [...pad(d.A.asks).reverse(), ...pad(d.A.bids)];
-  if (SP.sym !== d.sym) { SP.sym = d.sym; SP.prev = null; SP.cols = Array.from({length: 89}, () => Array.from({length: 20}, () => (Math.random() - .5) * 3000)); }
-  if (SP.prev) { SP.cols.push(cur.map((s, i) => s - SP.prev[i])); if (SP.cols.length > 90) SP.cols.shift(); }
+  const cur = new Map([...d.A.asks, ...d.A.bids].map(l => [l.price, l.size])), mid = d.book.mid;
+  if (SP.sym !== d.sym) { SP.sym = d.sym; SP.prev = null; const tk = tkOf(mid); SP.cols = H.cols.slice(-89).map(c => { const m = new Map(); for (let i = 0; i < 12; i++) [1, -1].forEach(s => m.set(+(c.mid + s * tk * (i + .5)).toFixed(4), (Math.random() - .5) * 3000 * (1 - i / 16))); return {mid: c.mid, m}; }); } // sample seed history
+  if (SP.prev) { const m = new Map(); cur.forEach((s, p) => { if (SP.prev.has(p)) m.set(p, s - SP.prev.get(p)); }); SP.cols.push({mid, m}); if (SP.cols.length > 90) SP.cols.shift(); }
   SP.prev = cur;
 }
 function spec() {
   const cv = $("#spec"); if (!cv || !SP.cols.length) return;
   const w = cv.clientWidth, h = cv.clientHeight, dpr = devicePixelRatio || 1; cv.width = w * dpr; cv.height = h * dpr;
   const x = cv.getContext("2d"); x.scale(dpr, dpr); x.font = "10px 'JetBrains Mono',monospace";
-  const aw = 34, rh = (h - 14) / 20, cw = (w - aw) / 90; let mx = 1; SP.cols.forEach(c => c.forEach(v => mx = Math.max(mx, Math.abs(v))));
-  SP.cols.forEach((c, i) => c.forEach((v, j) => { const a = Math.min(1, Math.sqrt(Math.abs(v) / mx)); if (a < .08) return; x.fillStyle = (v > 0 ? "rgba(0,240,255," : "rgba(245,158,11,") + (.85 * a).toFixed(2) + ")"; x.fillRect((90 - SP.cols.length + i) * cw, j * rh, cw + .5, rh - .5); }));
-  x.strokeStyle = "rgba(248,250,252,.5)"; x.beginPath(); x.moveTo(0, 10 * rh); x.lineTo(w - aw, 10 * rh); x.stroke();
-  x.fillStyle = "#94A3B8"; [["A10", 0], ["A5", 5], ["A1", 9], ["B1", 10], ["B5", 14], ["B10", 19]].forEach(([t, j]) => x.fillText(t, w - aw + 6, (j + .7) * rh));
-  x.fillText("−180s", 4, h - 3); x.fillText("now", w - aw - 24, h - 3);
+  const mid = SP.cols[SP.cols.length - 1].mid, tk = tkOf(mid), half = 14 * tk, pmin = mid - half, pmax = mid + half, dd = dec(mid);
+  const aw = 54, cw = (w - aw) / 90, Y = p => 6 + (h - 12) * (1 - (p - pmin) / (pmax - pmin)), rh = Math.max(2, (h - 12) * tk / (pmax - pmin)), X = i => (90 - SP.cols.length + i) * cw;
+  let mx = 1, bA = 0, aA = 0; SP.cols.forEach(c => c.m.forEach(v => mx = Math.max(mx, Math.abs(v))));
+  x.fillStyle = "#94A3B8"; x.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) { const pr = pmin + (pmax - pmin) * i / 4, y = Y(pr); x.strokeStyle = "rgba(30,41,59,.8)"; x.beginPath(); x.moveTo(0, y); x.lineTo(w - aw, y); x.stroke(); x.fillText(f(pr, dd), w - aw + 6, y + 3); }
+  SP.cols.forEach((c, i) => c.m.forEach((v, p) => {
+    const a = Math.min(1, Math.sqrt(Math.abs(v) / mx)); if (a < .08) return; const ask = p >= c.mid, hh = rh * (.55 + .45 * a);
+    if (v < 0) x.fillStyle = `rgba(245,158,11,${(.12 + .5 * a).toFixed(2)})`;
+    else { x.fillStyle = ask ? `hsla(${(18 - 18 * a).toFixed(0)},92%,${(46 + 10 * a).toFixed(0)}%,${(.2 + .75 * a).toFixed(2)})` : `hsla(${(168 - 30 * a).toFixed(0)},78%,${(36 + 14 * a).toFixed(0)}%,${(.2 + .75 * a).toFixed(2)})`; if (i >= SP.cols.length - 30) { if (ask) aA += v; else bA += v; } }
+    x.fillRect(X(i), Y(p) - hh / 2, cw + .5, hh);
+  }));
+  x.strokeStyle = "rgba(248,250,252,.7)"; x.lineWidth = 1.2; x.beginPath(); SP.cols.forEach((c, i) => { const px = X(i) + cw / 2; i ? x.lineTo(px, Y(c.mid)) : x.moveTo(px, Y(c.mid)); }); x.stroke();
+  curLine(x, w, aw, Y(mid), mid, dd, bA, aA, ["Bid adds", "Ask adds"]);
+  x.fillStyle = "#F43F5E"; x.fillText("▲ asks · sell side", 6, 24); x.fillStyle = "#10B981"; x.fillText("▼ bids · buy side", 6, h - 16);
+  x.fillStyle = "#94A3B8"; x.fillText("−180s", 4, h - 3); x.fillText("now", w - aw - 24, h - 3);
 }
 
 /* ---------- Evaluation board (sample values until the first data pull) ---------- */
@@ -214,14 +252,15 @@ function evalBoard(d) {
 <div><div class="evh">Sample-size gate</div>${meter("N_eff (non-overlapping)", neff, 1500)}${meter("Minority class", mino, 300)}<div class="text-[10px] text-slate-400">N_total ≈ ${cmp.format(neff * G.hz / 2)} sliding · stride 2 s</div><span class="mt-1 inline-block rounded border px-2 py-0.5 text-[10px] font-mono ${pass ? "text-emerald-400 border-emerald-800 bg-emerald-950/40" : "text-amber-400 border-amber-800 bg-amber-950/40"}">${pass ? "Gate passed" : "Underpowered · report as transfer ablation"}</span></div></div>`;
 }
 
-/* ---------- Latency waterfall ---------- */
-const LT = [];
+/* ---------- Latency waterfall (compact mini box in the side dock) ---------- */
+const LT = [], LC = ["#38BDF8", "#A78BFA", "#F472B6", "#FBBF24", "#34D399", "#FB923C"];
 function latency(d) {
   const el = $("#lat"); if (!el) return; const j = Math.random, br = d.status && d.status.book_age_ms || 8 + j() * 6;
-  const st = [["Exchange → receive", br], ["Reorder window", 10], ["100 ms grid bucket", 38 + j() * 24], ["Feature build", 3 + j() * 3], ["Model inference", 7 + j() * 6], ["Render", 4 + j() * 4]], tot = st.reduce((s, x) => s + x[1], 0); let off = 0;
+  const st = [["Exchange → receive", br], ["Reorder window", 10], ["100 ms grid bucket", 38 + j() * 24], ["Feature build", 3 + j() * 3], ["Model inference", 7 + j() * 6], ["Render", 4 + j() * 4]], tot = st.reduce((s, x) => s + x[1], 0);
   LT.push(tot); if (LT.length > 60) LT.shift(); const s = [...LT].sort((a, b) => a - b);
-  el.innerHTML = st.map(([n, v]) => { const l = off / tot * 100; off += v; return `<div class="mb-1.5"><div class="flex justify-between text-[10px] text-slate-400"><span>${n}</span><span class="mono text-slate-200">${v.toFixed(1)} ms</span></div><div class="relative h-1.5 rounded bg-slate-800"><div class="absolute h-1.5 rounded bg-cyan-500/80" style="left:${l}%;width:${Math.max(1.5, v / tot * 100)}%"></div></div></div>`; }).join("")
-  + `<div class="mt-2 flex justify-between text-[11px]"><span class="text-slate-400">End to end</span><span class="mono text-cyan-400">${tot.toFixed(1)} ms</span></div><div class="flex justify-between text-[10px] text-slate-400"><span>p50 <span class="mono text-slate-200">${s[Math.floor(s.length * .5)].toFixed(1)}</span> · p99 <span class="mono text-slate-200">${s[Math.min(s.length - 1, Math.floor(s.length * .99))].toFixed(1)}</span> ms</span><span>sample timings</span></div>`;
+  el.innerHTML = `<div class="flex h-2 overflow-hidden rounded bg-slate-800">${st.map(([n, v], i) => `<i title="${n} ${v.toFixed(1)} ms" style="width:${v / tot * 100}%;background:${LC[i]}"></i>`).join("")}</div>
+<div class="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[9px] text-slate-400">${st.map(([n, v], i) => `<span class="flex justify-between gap-1"><span class="truncate"><b style="color:${LC[i]}">■</b> ${n}</span><span class="mono text-slate-200">${v.toFixed(0)}</span></span>`).join("")}</div>
+<div class="mt-1.5 flex justify-between text-[10px] text-slate-400"><span>End to end <span class="mono text-cyan-400">${tot.toFixed(1)} ms</span></span><span>p50 <span class="mono text-slate-200">${s[Math.floor(s.length * .5)].toFixed(1)}</span> · p99 <span class="mono text-slate-200">${s[Math.min(s.length - 1, Math.floor(s.length * .99))].toFixed(1)}</span></span></div>`;
 }
 
 /* ---------- Modal + subscription request flow ---------- */
@@ -253,12 +292,13 @@ window.SonarRequests = {list: () => LS("zia_subscription_requests") || [], downl
 
 /* ---------- Command palette ---------- */
 const SYMS = ["ONEG", "CHOW", "SGRX", "KLNR", "VRTA", "TRBO", "NOVA", "PLZN"];
-const PANELS = [["Liquidity heatmap", "heat"], ["Order-flow spectrogram", "spectro"], ["Model evaluation board", "evalb"], ["Latency waterfall", "latency"], ["Barrier forecast", "barrier"], ["Order book ladder", "book"], ["Feature monitor", "feat"], ["Promotion funnel", "funnel"]];
+const PANELS = [["Liquidity heatmap", "heat"], ["Order-flow spectrogram", "spectro"], ["Model evaluation board", "evalb"], ["L2-L3 book reconstruction", "recon"], ["Barrier forecast", "barrier"], ["Order book ladder", "book"], ["Feature monitor", "feat"]];
 const CMDS = () => [...SYMS.map(s => ({t: "Load ticker " + s, k: "symbol " + s, run: () => Sonar.setSym(s)})),
   ...["1m", "5m", "15m", "1D"].map((tf, i) => ({t: "Timeframe " + tf, k: "chart interval", run: () => { const b = $$("[data-tf]")[i]; if (b) b.click(); }})),
   ...[30, 60, 180, 300, 900].map(h => ({t: "Prediction horizon " + h + "s", k: "tau barrier model", run: () => setHz(h)})),
   {t: "Toggle layout edit mode", k: "drag resize move panels", run: () => layoutMode(!document.body.classList.contains("editing"))}, {t: "Reset layout", k: "default panels", run: resetLayout},
   {t: "Add data feeds and venues", k: "subscribe level 2 level 3 exchanges data", run: sub},
+  {t: "Open Market Movers side panel", k: "hotlists gainers losers dock", run: () => dock("movers", true)}, {t: "Open Latency box", k: "pipeline waterfall dock", run: () => dock("lat", true)},
   ...PANELS.map(([n, p]) => ({t: "Go to " + n, k: "scroll jump", run: () => { const el = $(`[data-panel="${p}"]`); if (el) el.scrollIntoView({behavior: "smooth", block: "center"}); }}))];
 function palette() {
   const m = modal("pal", `<div class="mp !p-0 !max-w-lg"><input id="pal-in" class="w-full border-b border-slate-800 bg-transparent px-4 py-3 text-sm text-slate-100 outline-none" placeholder="Search tickers, panels and settings…" autocomplete="off" aria-label="Command palette"><ul id="pal-ul" class="max-h-72 overflow-auto py-1"></ul><div class="border-t border-slate-800 px-4 py-1.5 text-[10px] text-slate-400">↑↓ navigate · Enter run · Esc close</div></div>`);
@@ -273,7 +313,7 @@ function palette() {
 }
 
 /* ---------- Drag / resize layout (saved in this browser) ---------- */
-const LKEY = "zia_layout_v1", spanRe = /\b(lg|md):col-span-(\d+)\b/, SPANS = [3, 4, 5, 6, 8, 12];
+const LKEY = "zia_layout_v2", spanRe = /\b(lg|md):col-span-(\d+)\b/, SPANS = [3, 4, 5, 6, 8, 12];
 function saveLayout() { const o = {}; $$("[data-grid]").forEach(g => { o[g.dataset.grid] = [...g.children].filter(c => c.dataset.panel).map(c => { const m = c.className.match(spanRe); return [c.dataset.panel, m ? +m[2] : 0, c.style.height || ""]; }); }); LS(LKEY, o); }
 function loadLayout() { const o = LS(LKEY); if (!o) return; $$("[data-grid]").forEach(g => (o[g.dataset.grid] || []).forEach(([id, span, ht]) => { const p = g.querySelector(`[data-panel="${id}"]`); if (!p) return; g.appendChild(p); if (span) p.className = p.className.replace(spanRe, (a, bp) => `${bp}:col-span-${span}`); if (ht) p.style.height = ht; })); }
 function resetLayout() { try { localStorage.removeItem(LKEY); } catch (e) {} location.reload(); }
@@ -301,7 +341,7 @@ document.addEventListener("sonar:tick", e => {
   const hl = $("#heat-sym"); if (hl) hl.textContent = `${d.sym} · ${d.tf}`;
   const sc = $("#sync-chip"); if (sc) sc.textContent = `● Synced · ${d.sym} · ${$$("[data-panel]").length} panels`;
   if (changed) flash();
-  [setBar, ladder, barrier, features, funnel, ingest, heat, specIngest, spec, evalBoard, latency].forEach(fn => { try { fn(d); } catch (err) { console.error("sonar-pro", fn.name, err); } });
+  [setBar, ladder, recon, barrier, features, ingest, heat, specIngest, spec, evalBoard, latency].forEach(fn => { try { fn(d); } catch (err) { console.error("sonar-pro", fn.name, err); } });
 });
 document.addEventListener("click", e => {
   const t = e.target;
@@ -311,10 +351,12 @@ document.addEventListener("click", e => {
   if (t.closest("[data-back]")) { W.step--; return subRender(); }
   if (t.closest("[data-submit]")) return subSubmit();
   if (t.closest("[data-dl]")) return download();
+  const dk = t.closest("[data-dock]"); if (dk) return dock(dk.dataset.dock);
+  const rv = t.closest("[data-rv]"); if (rv) { if (rv.dataset.rv === "L3" && !PRO) return sub(); G.rv = rv.dataset.rv; return LAST && recon(LAST); }
   const tr = t.closest("[data-tier]"); if (tr) { if (tr.dataset.tier === "L3" && !PRO) return sub(); G.tier = tr.dataset.tier; vbar(); return LAST && ladder(LAST); }
   if (t.closest("[data-flip]")) { G.flip = !G.flip; return LAST && ladder(LAST); }
   if (t.closest("#ven-btn")) { G.pop = !G.pop; return vbar(); }
-  const vr = t.closest(".vrow"); if (vr) { const v = VEN.find(x => x.id === vr.dataset.v); if (isLocked(v)) return sub(); if (G.sel.has(v.id) && G.sel.size > 1) G.sel.delete(v.id); else G.sel.add(v.id); vbar(); if (LAST) { LAST.A = agg(LAST.book, LAST.sym); [setBar, ladder, heat, funnel].forEach(fn => fn(LAST)); } return; }
+  const vr = t.closest(".vrow"); if (vr) { const v = VEN.find(x => x.id === vr.dataset.v); if (isLocked(v)) return sub(); if (G.sel.has(v.id) && G.sel.size > 1) G.sel.delete(v.id); else G.sel.add(v.id); vbar(); if (LAST) { LAST.A = agg(LAST.book, LAST.sym); [setBar, ladder, recon, heat].forEach(fn => fn(LAST)); } return; }
   if (G.pop && !t.closest("#vbar")) { G.pop = false; vbar(); }
   const wb = t.closest("[data-w]"); if (wb) { const p = wb.closest("[data-panel]"), m = p.className.match(spanRe); if (m) { const i = Math.max(0, Math.min(SPANS.length - 1, SPANS.indexOf(+m[2]) + +wb.dataset.w)); p.className = p.className.replace(spanRe, `${m[1]}:col-span-${SPANS[i]}`); saveLayout(); } }
   const hb = t.closest("#hz button"); if (hb) setHz(+hb.dataset.h);
@@ -338,5 +380,12 @@ addEventListener("keydown", e => {
   if (e.key === "/") { e.preventDefault(); return palette(); }
   const i = "1234".indexOf(e.key); if (i >= 0) { const b = $$("[data-tf]")[i]; if (b) b.click(); }
 });
-vbar(); loadLayout();
+/* ---------- Collapsible side dock (state saved in this browser) ---------- */
+const DK = Object.assign({movers: 0, lat: 0}, LS("zia_dock_v1") || {});
+function dock(k, on) {
+  if (k) { DK[k] = on === undefined ? !DK[k] : on; LS("zia_dock_v1", DK); }
+  const p = $("#dock-panel"), open = !!(DK.movers || DK.lat); if (!p) return; p.classList.toggle("open", open); p.setAttribute("aria-hidden", String(!open));
+  ["movers", "lat"].forEach(n => { const s = $(`[data-dk="${n}"]`); if (s) s.classList.toggle("shut", !DK[n]); $$(`.dk-tab[data-dock="${n}"]`).forEach(b => { b.classList.toggle("on", !!DK[n]); b.setAttribute("aria-expanded", String(!!DK[n])); }); });
+}
+vbar(); loadLayout(); dock();
 })();
