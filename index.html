@@ -112,7 +112,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
   <section id="preview" aria-label="Terminal preview" class="max-w-[1440px] mx-auto px-4 pb-6">
     <div id="drop" role="alert" class="hidden mb-3 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white"></div>
     <div class="card p-2 mb-3 flex flex-wrap items-center gap-2 border-slate-800">
-      <form id="qf" class="flex"><label for="q" class="sr-only">Symbol</label><input id="q" value="ONEG" autocomplete="off" class="mono w-28 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm uppercase text-slate-100"><button class="btn ml-1 hover:bg-slate-800">Go</button></form>
+      <form id="qf" class="flex"><label for="q" class="sr-only">Symbol</label><input id="q" value="SPY" autocomplete="off" class="mono w-28 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm uppercase text-slate-100"><button class="btn ml-1 hover:bg-slate-800">Go</button></form>
       <span id="sess" class="btn !text-cyan-400 font-mono" title="US equity session"></span>
       <span id="sync-chip" class="btn !text-emerald-400 font-mono" title="Every panel follows the selected ticker"></span>
       <button id="open-pal" class="btn font-mono" title="Command palette (Ctrl/Cmd+K or /)">Search ⌘K</button>
@@ -124,10 +124,10 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
 
     <div data-grid="preview" class="grid grid-cols-12 gap-3 items-stretch">
       <!-- Chart Panel -->
-      <div data-panel="chart" class="card col-span-12 lg:col-span-5 p-2 flex flex-col">
+      <div data-panel="chart" class="card col-span-12 lg:col-span-5 p-2 flex flex-col relative">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pb-2 border-b border-slate-800/80">
-          <span id="csym" class="mono font-semibold text-sm text-cyan-400">ONEG · 1m</span>
-          <span id="ohlc" class="mono text-[11px] text-slate-400">TradingView Advanced Real-Time Chart</span>
+          <span id="csym" class="mono font-semibold text-sm text-cyan-400">SPY · 1m</span>
+          <span id="ohlc" class="mono text-[11px] text-slate-400">TradingView Advanced Real-Time Chart</span><button id="chart-set" class="btn ml-auto font-mono" aria-expanded="false" title="Chart type, indicators and tools">Chart settings</button><div id="chart-pop" class="hidden absolute right-2 top-9 z-30 w-64 max-h-[540px] overflow-auto rounded border border-slate-700 bg-slate-950/95 p-3 text-[11px] text-slate-300 shadow-2xl"></div>
         </div>
         <div class="relative h-[600px] mt-1 w-full overflow-hidden rounded">
           <div id="tradingview_chart" class="w-full h-full"></div>
@@ -148,7 +148,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       <div data-panel="book" class="col-span-12 lg:col-span-3 space-y-3 flex flex-col justify-between">
         <div class="card p-2 flex-1">
           <div class="flex items-center justify-between px-1 pb-1 border-b border-slate-800">
-            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Depth of Market</h2>
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Order Book · All Venues</h2>
             <span class="text-[10px] text-cyan-400 font-mono">100ms Grid</span>
           </div>
           <div id="vbar" class="relative mt-1.5 flex items-center justify-between gap-1"></div>
@@ -174,14 +174,14 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
         <div class="relative mt-1.5 flex-1 min-h-[170px]"><canvas id="heat" class="absolute inset-0 w-full h-full" role="img" aria-label="Liquidity heatmap with trade bubbles and horizon barriers"></canvas></div>
         <p class="px-1 pt-1.5 mt-2 text-[10px] text-slate-400 border-t border-slate-800/50">Green = bids below price, red = asks above (brighter and thicker = more resting size, selected venues) · blue line = current price · bubbles = prints by Lee-Ready side · ◆ cyan +1 iceberg absorption, amber −1 unexecuted depletion · dashed = horizon barriers</p>
       </div>
-      <div data-panel="feat" class="card col-span-12 lg:col-span-4 lg:row-span-2 p-2 flex flex-col"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Microstructure Features</h2><div id="feat" class="grid grid-cols-2 gap-1.5 mt-1.5"></div><div class="mt-2 flex-1 min-h-[72px] rounded border border-dashed border-slate-700/80 grid place-items-center text-[10px] font-mono text-slate-500">Premium Locked Module</div></div>
+      <div data-panel="feat" class="card col-span-12 lg:col-span-4 lg:row-span-2 p-2 flex flex-col"><h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Microstructure Features</h2><div id="feat" class="grid grid-cols-2 gap-1.5 mt-1.5"></div><h2 class="mt-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-300 pb-1 border-b border-slate-800">Flow &amp; Activity Signals</h2><div id="flow2" class="grid grid-cols-2 grid-rows-2 gap-1.5 mt-1.5 flex-1"></div></div>
       <div data-panel="spectro" class="card col-span-12 lg:col-span-8 p-2 flex flex-col">
         <div class="flex flex-wrap items-center gap-2 px-1 pb-2 border-b border-slate-800">
-          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Order-Flow Spectrogram</h2><span class="mono text-[11px] text-cyan-400">price-level Δ size</span>
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Order-Flow Spectrogram</h2><span class="mono text-[11px] text-cyan-400">bid × ask footprint</span>
           <button class="btn ml-auto font-mono" data-sub>Venues <span data-vcount>2/12</span> · Add data</button>
         </div>
-        <div class="relative mt-1.5 flex-1 min-h-[170px]"><canvas id="spec" class="absolute inset-0 w-full h-full" role="img" aria-label="Order flow spectrogram of liquidity added and removed per book level"></canvas></div>
-        <p class="px-1 pt-1.5 mt-2 text-[10px] text-slate-400 border-t border-slate-800/50">Y-axis = price (same scale as the book) · red = size added on asks (sell pressure), green = size added on bids (buy pressure) · brighter and thicker = bigger change · amber = liquidity pulled · blue line = current price · columns = 2 s steps</p>
+        <div class="relative mt-1.5 flex-1 min-h-[210px]"><canvas id="spec" class="absolute inset-0 w-full h-full" role="img" aria-label="Order flow spectrogram of liquidity added and removed per book level"></canvas></div>
+        <p class="px-1 pt-1.5 mt-2 text-[10px] text-slate-400 border-t border-slate-800/50">Footprint: each column = 12 s of prints · left red = sells hitting bids, right green = buys lifting asks · solid cell = 3x imbalance · gold box = bar POC · left histogram = volume profile · S/R = largest resting wall · blue line = current price · sample prints until the live tape connects</p>
       </div>
       <div data-panel="evalb" class="card col-span-12 p-2">
         <div class="flex flex-wrap items-center gap-2 px-1 pb-2 border-b border-slate-800">
@@ -198,7 +198,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
     <div class="card p-4 relative overflow-hidden bg-slate-900/90 border-cyan-500/40">
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
         <div class="flex items-center gap-2">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-100">Sonar - Machine Learning Engine</h2>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-100">ML AI Trading Engine & Strategy Optimizer</h2>
           <div class="flex flex-wrap items-center gap-2"><span class="text-[10px] font-mono text-slate-400">Prediction horizon</span><div id="hz" class="flex gap-1" role="group" aria-label="Prediction horizon"><button class="btn" data-h="30">30s</button><button class="btn" data-h="60">60s</button><button class="btn on" data-h="180">180s</button><button class="btn" data-h="300">300s</button><button class="btn" data-h="900">900s</button></div><label class="flex items-center gap-1 text-[10px] font-mono text-slate-400">Barrier k <input id="kk" type="range" min="0.5" max="2" step="0.1" value="1" class="w-20 accent-cyan-400"><output id="kv" class="text-cyan-400">1.0</output></label></div>
         </div>
         <div class="flex items-center gap-2">

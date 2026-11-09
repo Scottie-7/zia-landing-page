@@ -21,7 +21,7 @@ const TIP = {
 
 // ---------- SAMPLE PROVIDERS ----------
 const SYMS = {
-  ONEG: ["Oneg Holdings", 2.41, 108.15], CHOW: ["Chow Therapeutics", 1.18, 64.2], SGRX: ["Sygrx Biosciences", 0.86, 41.7],
+  SPY: ["SPDR S&P 500 ETF (sample price)", 600.0, 0.4], ONEG: ["Oneg Holdings", 2.41, 108.15], CHOW: ["Chow Therapeutics", 1.18, 64.2], SGRX: ["Sygrx Biosciences", 0.86, 41.7],
   KLNR: ["Kilner Robotics", 5.32, 22.4], VRTA: ["Verta Minerals", 3.07, 12.9], TRBO: ["Turbo Marine", 0.62, 7.2],
   NOVA: ["Novara Labs", 4.4, -9.6], PLZN: ["Plaz Networks", 1.74, -18.3]
 };
@@ -61,7 +61,13 @@ const P = {
 };
 
 // ---------- RENDERERS ----------
-const st = {sym: "ONEG", tf: "1m"};
+const st = {sym: "SPY", tf: "1m"};
+
+// ---------- Chart settings (saved in this browser) ----------
+const dflt = () => ({style: "3", tz: "Etc/UTC", st: {macd: 1, vol: 1, rsi: 0, vwap: 0, ma: 0, bb: 0}, tools: 1, top: 1, legend: 1, ranges: 0, symchange: 0, details: 0, cal: 1});
+const IND = {macd: ["MACD (histogram divergence)", "MACD@tv-basicstudies"], vol: ["Volume", "Volume@tv-basicstudies"], rsi: ["RSI", "RSI@tv-basicstudies"], vwap: ["VWAP", "VWAP@tv-basicstudies"], ma: ["Moving Average Ribbon", "Moving Average Ribbon@tv-basicstudies"], bb: ["Bollinger Bands", "BB@tv-basicstudies"]};
+const CS = (() => { try { return Object.assign(dflt(), JSON.parse(localStorage.getItem("zia_chart_v1") || "null") || {}); } catch (e) { return dflt(); } })();
+const EXCH = {SPY: "AMEX:SPY", IWM: "AMEX:IWM", DIA: "AMEX:DIA"};
 
 function renderTVChart(symbol, tf) {
   const container = $("#tradingview_chart");
@@ -74,7 +80,7 @@ function renderTVChart(symbol, tf) {
   
   const tfMap = { "1m": "1", "5m": "5", "15m": "15", "1D": "D" };
   const interval = tfMap[tf] || "1";
-  const formattedSymbol = symbol.includes(":") ? symbol : `NASDAQ:${symbol}`;
+  const formattedSymbol = symbol.includes(":") ? symbol : (EXCH[symbol] || `NASDAQ:${symbol}`);
 
   container.innerHTML = "";
   try {
@@ -82,21 +88,21 @@ function renderTVChart(symbol, tf) {
       "autosize": true,
       "symbol": formattedSymbol,
       "interval": interval,
-      "timezone": "Etc/UTC",
+      "timezone": CS.tz,
       "theme": "dark",
-      "style": "1",
+      "style": CS.style,
       "locale": "en",
       "toolbar_bg": "#080C14",
       "enable_publishing": false,
-      "hide_top_toolbar": false,
-      "hide_legend": false,
+      "hide_top_toolbar": !CS.top,
+      "hide_legend": !CS.legend,
+      "hide_side_toolbar": !CS.tools,
+      "withdateranges": !!CS.ranges,
+      "allow_symbol_change": !!CS.symchange,
+      "details": !!CS.details,
       "save_image": false,
-      "calendar": true,
-      "studies": [
-        "Volume@tv-basicstudies",
-        "VWAP@tv-basicstudies",
-        "Moving Average Ribbon@tv-basicstudies"
-      ],
+      "calendar": !!CS.cal,
+      "studies": Object.keys(IND).filter(k => CS.st[k]).map(k => IND[k][1]),
       "container_id": "tradingview_chart"
     });
   } catch (e) {
@@ -104,6 +110,22 @@ function renderTVChart(symbol, tf) {
   }
   const csymEl = $("#csym");
   if (csymEl) csymEl.textContent = `${st.sym} · ${st.tf}`;
+}
+
+function chartUI() {
+  const pop = $("#chart-pop"), btn = $("#chart-set"); if (!pop || !btn) return; let tm;
+  const chk = (a, k, l, on) => `<label class="flex items-center gap-2 py-0.5"><input type="checkbox" data-${a}="${k}" ${on ? "checked" : ""}>${l}</label>`;
+  const paint = () => { pop.innerHTML = `<div class="mb-1 font-semibold text-slate-200">Chart type</div><div class="flex flex-wrap gap-1">${[["3", "Area"], ["1", "Candles"], ["0", "Bars"], ["2", "Line"], ["8", "Heikin Ashi"], ["9", "Hollow"]].map(([v, n]) => `<button class="btn ${CS.style === v ? "on" : ""}" data-cs="${v}">${n}</button>`).join("")}</div>
+<div class="mt-2 mb-1 font-semibold text-slate-200">Indicators (top to bottom)</div>${Object.entries(IND).map(([k, v]) => chk("ind", k, v[0], CS.st[k])).join("")}
+<div class="mt-2 mb-1 font-semibold text-slate-200">Chart tools</div>${chk("opt", "tools", "Drawing tools (left toolbar)", CS.tools)}${chk("opt", "top", "Top toolbar (intervals, indicators)", CS.top)}${chk("opt", "legend", "Legend", CS.legend)}${chk("opt", "ranges", "Date range bar", CS.ranges)}${chk("opt", "symchange", "Symbol search inside chart", CS.symchange)}${chk("opt", "details", "Details panel", CS.details)}${chk("opt", "cal", "Earnings and events", CS.cal)}
+<label class="mt-2 block">Timezone <select data-tz class="ml-1 rounded border border-slate-700 bg-slate-900 px-1 py-0.5">${[["Etc/UTC", "UTC"], ["America/New_York", "New York"], ["America/Chicago", "Chicago"], ["America/Denver", "Denver"], ["America/Los_Angeles", "Los Angeles"], ["Europe/London", "London"]].map(([v, n]) => `<option value="${v}" ${CS.tz === v ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+<button class="btn mt-2" data-reset>Reset to defaults</button><p class="mt-2 text-[10px] text-slate-500">Changes reload the chart. Indicators added by hand inside TradingView are not kept on reload.</p>`; };
+  const apply = () => { try { localStorage.setItem("zia_chart_v1", JSON.stringify(CS)); } catch (e) {} paint(); clearTimeout(tm); tm = setTimeout(() => renderTVChart(st.sym, st.tf), 250); };
+  btn.onclick = () => { pop.classList.toggle("hidden"); btn.setAttribute("aria-expanded", String(!pop.classList.contains("hidden"))); };
+  document.addEventListener("click", e => { const p = e.composedPath(); if (!p.includes(pop) && !p.includes(btn)) pop.classList.add("hidden"); });
+  pop.onclick = e => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.cs !== undefined) CS.style = b.dataset.cs; else if (b.dataset.reset !== undefined) Object.assign(CS, dflt()); else return; apply(); };
+  pop.onchange = e => { const t = e.target; if (t.dataset.ind) CS.st[t.dataset.ind] = +t.checked; else if (t.dataset.opt) CS[t.dataset.opt] = +t.checked; else if (t.dataset.tz !== undefined) CS.tz = t.value; apply(); };
+  paint();
 }
 
 function drawBook(b) {
@@ -217,7 +239,7 @@ function setSym(s) {
 }
 
 async function init() {
-  renderTVChart(st.sym, st.tf);
+  renderTVChart(st.sym, st.tf); chartUI();
   const all = a => document.querySelectorAll(a);
   all("[data-tf]").forEach(b => b.onclick = () => { st.tf = b.dataset.tf; all("[data-tf]").forEach(x => x.classList.toggle("on", x === b)); renderTVChart(st.sym, st.tf); });
 

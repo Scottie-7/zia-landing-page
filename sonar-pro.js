@@ -17,7 +17,7 @@ const LS = (k, v) => { try { if (v === undefined) return JSON.parse(localStorage
 /* ---- Venue catalog. c = placeholder estimate in USD/month for Level 2 (edit freely); free = included in the free preview ---- */
 const VEN = [{id: "NSDQ", n: "Nasdaq", c: 15, free: 1}, {id: "ARCA", n: "NYSE Arca", c: 15, free: 1}, {id: "NYSE", n: "NYSE", c: 20}, {id: "AMEX", n: "NYSE American", c: 10}, {id: "BZX", n: "Cboe BZX", c: 12}, {id: "BYX", n: "Cboe BYX", c: 8}, {id: "EDGX", n: "Cboe EDGX", c: 12}, {id: "EDGA", n: "Cboe EDGA", c: 8}, {id: "IEX", n: "IEX", c: 6}, {id: "MEMX", n: "MEMX", c: 10}, {id: "BX", n: "Nasdaq BX", c: 8}, {id: "PSX", n: "Nasdaq PSX", c: 8}];
 const TIER = {L1: {n: "Level 1", m: .3, d: "NBBO quotes and trades"}, L2: {n: "Level 2", m: 1, d: "Price-level depth by venue"}, L3: {n: "Level 3", m: 2.5, d: "Order-level (MBO) reconstruction"}};
-const G = {sym: "", hz: 180, k: 1, sel: new Set(["NSDQ", "ARCA"]), tier: "L2", flip: false, pop: false, rv: "L2"};
+const G = {sym: "", hz: 180, k: 1, sel: new Set(["NSDQ", "ARCA"]), tier: "L2", flip: false, pop: false, rv: "L2", gate: 0};
 const nm = k => (VEN.find(v => v.id === k) || {n: k}).n, isLocked = v => !v.free && !PRO;
 const est = (ids, t) => [...ids].reduce((s, id) => { const v = VEN.find(x => x.id === id); return s + (v.free && t !== "L3" ? 0 : v.c * TIER[t].m); }, 0);
 let LAST = null;
@@ -51,8 +51,9 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 #dock-rail{pointer-events:auto;position:absolute;left:0;top:0;display:flex;flex-direction:column;gap:4px}
 .dk-tab{writing-mode:vertical-rl;transform:rotate(180deg);padding:10px 4px;border:1px solid #334155;border-left:0;border-radius:0 6px 6px 0;background:#0b1220;font:600 10px "JetBrains Mono",monospace;color:#94A3B8}
 .dk-tab.on{background:#083344;color:#00F0FF;border-color:#0e7490}
-#dock-panel{pointer-events:auto;position:absolute;left:26px;top:0;width:min(300px,calc(100vw - 40px));max-height:calc(100vh - 5rem);overflow-y:auto;padding:8px 8px 0;border:1px solid #1e293b;border-radius:0 8px 8px 0;background:rgba(8,12,20,.96);backdrop-filter:blur(10px);box-shadow:8px 0 30px rgba(0,0,0,.5);transform:translateX(-110%);visibility:hidden;transition:transform .2s,visibility 0s .2s}
+#dock-panel{pointer-events:auto;position:absolute;left:26px;top:0;width:min(236px,calc(100vw - 40px));max-height:calc(100vh - 5rem);overflow-y:auto;padding:8px 8px 0;border:1px solid #1e293b;border-radius:0 8px 8px 0;background:rgba(8,12,20,.96);backdrop-filter:blur(10px);box-shadow:8px 0 30px rgba(0,0,0,.5);transform:translateX(-110%);visibility:hidden;transition:transform .2s,visibility 0s .2s}
 #dock-panel.open{transform:none;visibility:visible;transition:transform .2s}
+.rr.gate{background:rgba(255,255,255,.05)}.rc-tip{position:absolute;padding:3px 5px;border:1px solid;border-radius:4px;background:rgba(2,6,23,.94);font:9px "JetBrains Mono",monospace;line-height:1.35;color:#e2e8f0;white-space:nowrap}
 .dk-sec{margin-bottom:8px;overflow:hidden;max-height:540px;border:1px solid #1e293b;border-radius:6px;background:rgba(15,23,42,.7);transition:max-height .2s}.dk-sec.shut{max-height:0;margin:0;border-width:0}
 </style>`);
 
@@ -97,7 +98,7 @@ function ladder(d) {
 const H = {cols: [], bub: [], ev: [], n: 0, sym: "", lastT: 0, bar: null, p: null};
 const probs = d => { if (Sonar.live || (G.hz === 180 && d.probs)) return d.probs; const r = rng(hs(d.sym + G.hz) + Math.floor(Date.now() / 5000)), a = .18 + r() * .22, b = .2 + r() * .22; return {p_down: a, p_up: b, p_neutral: 1 - a - b}; };
 function setBar(d) {
-  const t = tob(d.A), sig15 = .0025 + (hs(d.sym) % 30) / 1e4, sigH = sig15 * Math.sqrt(G.hz / 15), theta = Math.max(.0015, G.k * sigH); // sample sigma; backend supplies real values
+  const t = tob(d.A), sig15 = t.mid >= 100 ? .0002 + (hs(d.sym) % 30) / 1e5 : .0025 + (hs(d.sym) % 30) / 1e4, sigH = sig15 * Math.sqrt(G.hz / 15), theta = Math.max(.0015, G.k * sigH); // sample sigma; backend supplies real values
   H.bar = {ask: t.ba, bid: t.bb, k: G.k, sigH, theta, up: t.ba * (1 + theta), lo: t.bb * (1 - theta)}; H.p = probs(d);
 }
 function barrier(d) {
@@ -131,22 +132,46 @@ function features(d) {
   el.innerHTML = FD.map(([k, n, fm, sg]) => { const a = F.h[k], v = a[a.length - 1], c = sg && v < 0 ? "#F59E0B" : sg ? "#10B981" : "#00F0FF"; return `<div class="bg-slate-950/80 border border-slate-800 rounded px-2 py-1"><div class="text-[10px] text-slate-400">${n}</div><div class="mono text-sm font-semibold" style="color:${c}">${v === undefined ? "–" : fm(v)}</div>${spark(a, c)}</div>`; }).join("");
 }
 
-/* ---------- Level 2-3 order book reconstruction: venue-stacked depth + order queues (L3 = sample MBO until backend feed) ---------- */
+/* ---------- Level 2-3 order book reconstruction: venue-stacked depth + order queues, hover/pin crosshair, price gate (L3 = sample MBO until backend feed) ---------- */
 const VC = ["#38BDF8", "#A78BFA", "#F472B6", "#FBBF24", "#34D399", "#FB923C", "#60A5FA", "#C084FC", "#2DD4BF", "#F87171", "#A3E635", "#E879F9"], vcol = id => VC[VEN.findIndex(v => v.id === id)] || "#94A3B8";
+const RC = {pmin: 0, pmax: 1, A: null, mid: 1, dd: 2, pin: null, hov: null, sym: ""}, GH = {k: "", h: [], prev: new Map()};
+const lvlAt = (A, p, ex) => { const m = [...A.bids.slice(0, 10), ...A.asks.slice(0, 10)].reduce((a, l) => !a || Math.abs(l.price - p) < Math.abs(a.price - p) ? l : a, null); return ex && (!m || Math.abs(m.price - p) > tkOf(RC.mid) / 2) ? {price: p, size: 0, v: {}} : m; };
+function crossHTML() {
+  const A = RC.A; if (!A) return "";
+  const one = (p, pin) => { const l = lvlAt(A, p, pin); if (!l) return ""; const bid = l.price < RC.mid, cum = sum((bid ? A.bids : A.asks).slice(0, 10).filter(q => bid ? q.price >= l.price : q.price <= l.price)), x = (l.price - RC.pmin) / ((RC.pmax - RC.pmin) || 1) * 100, c = pin ? "#FBBF24" : "#E2E8F0", right = x > 58;
+    return `<div style="position:absolute;top:0;bottom:0;left:${x.toFixed(2)}%;border-left:1px ${pin ? "dashed" : "solid"} ${c}"></div><div class="rc-tip" style="${right ? "right" : "left"}:${(right ? 100 - x : x).toFixed(2)}%;${pin ? "bottom" : "top"}:2px;border-color:${c}"><b style="color:${bid ? "#34D399" : "#FB7185"}">${bid ? "BID" : "ASK"} ${f(l.price, RC.dd)}</b>${pin ? " · pinned" : ""}<br>Resting <b>${l.size.toLocaleString()}</b> sh<br>Cum from touch ${cmp.format(cum)} sh · ${Math.abs((l.price - RC.mid) * 100).toFixed(1)}¢ from mid${l.size ? `<br><span style="color:#94A3B8">${Object.entries(l.v).map(([k, s]) => nm(k) + " " + cmp.format(s)).join(" · ")}</span>` : ""}</div>`; };
+  return (RC.pin != null ? one(RC.pin, 1) : "") + (RC.hov != null ? one(RC.hov, 0) : "");
+}
+const paintCross = () => { const o = $("#rc-ov"); if (o) o.innerHTML = crossHTML(); };
 function recon(d) {
   const el = $("#recon"); if (!el) return;
   const A = d.A, N = 10, t = tob(A), dd = dec(d.book.mid), evs = d.book.events || [], bids = A.bids.slice(0, N), asks = A.asks.slice(0, N), L3 = G.rv === "L3";
   const mx = Math.max(1, ...bids.map(l => l.size), ...asks.map(l => l.size)), bT = sum(bids), aT = sum(asks), im = (bT - aT) / ((bT + aT) || 1), mc = Math.max(bT, aT, 1);
   const pmin = bids[bids.length - 1].price, pmax = asks[asks.length - 1].price, X = p => ((p - pmin) / ((pmax - pmin) || 1) * 300).toFixed(1), Y = c => (96 - c / mc * 90).toFixed(1);
+  if (RC.sym !== d.sym) Object.assign(RC, {sym: d.sym, pin: null, hov: null}); Object.assign(RC, {pmin, pmax, A, mid: t.mid, dd});
+  const n = G.gate, gk = d.sym + n; if (GH.k !== gk) Object.assign(GH, {k: gk, h: [], prev: new Map()});
+  let g = null;
+  if (n) { const gb = bids.slice(0, n), ga = asks.slice(0, n), b = sum(gb), a = sum(ga), now = Date.now(); let ch = 0; [...gb, ...ga].forEach(l => { if (GH.prev.has(l.price)) ch += Math.abs(l.size - GH.prev.get(l.price)); }); GH.prev = new Map([...gb, ...ga].map(l => [l.price, l.size]));
+    GH.h.push({t: now, b, a, ch: ch / ((b + a) || 1)}); if (GH.h.length > 60) GH.h.shift(); const o = GH.h[Math.max(0, GH.h.length - 6)], dt = Math.max(1, (now - o.t) / 1000);
+    g = {b, a, eb: gb[gb.length - 1].price, ea: ga[ga.length - 1].price, rb: (b - o.b) / dt, ra: (a - o.a) / dt, ch: GH.h[GH.h.length - 1].ch}; }
   const area = (L, col) => { let c = 0; const pts = []; L.forEach((l, i) => { if (i) pts.push([X(l.price), Y(c)]); c += l.size; pts.push([X(l.price), Y(c)]); }); const e = pts[pts.length - 1]; return `<polygon points="${[[pts[0][0], 100], ...pts, [e[0], 100]].join(" ")}" fill="${col}" fill-opacity=".28" stroke="${col}" stroke-width="1.2" vector-effect="non-scaling-stroke"/>`; };
-  const segs = l => Object.entries(l.v).map(([k, s]) => { if (!L3) return `<i style="flex:${s};background:${vcol(k)}" title="${nm(k)} ${s.toLocaleString()}"></i>`; const r = rng(hs(k + l.price)), n = 1 + Math.floor(r() * Math.min(5, 1 + s / 400)), w = Array.from({length: n}, () => .3 + r()), W2 = w.reduce((a, c) => a + c, 0); return w.map((q, i) => `<i style="flex:${s * q / W2};background:${vcol(k)};opacity:${i % 2 ? .62 : 1}" title="${nm(k)} order ${i + 1}/${n} · ~${Math.round(s * q / W2 / 100) * 100}"></i>`).join(""); }).join("");
-  const row = (side, l) => { const e = evs.find(x => x.side === side && Math.abs(x.price - l.price) < 1e-6), ice = e && e.type[0] === "i"; return `<div class="rr ${side}"><b>${f(l.price, dd)}</b><span><span class="bar" style="width:${(l.size / mx * 100).toFixed(1)}%">${segs(l)}</span></span><u>${e ? `<em class="ev ${ice ? "cy" : "am"}" title="${TIP[e.type]}">${ice ? "+1" : "−1"}</em> ` : ""}${cmp.format(l.size)}</u></div>`; };
+  const gl = g ? `<rect x="${X(g.eb)}" y="0" width="${(X(g.ea) - X(g.eb)).toFixed(1)}" height="100" fill="#fff" fill-opacity=".05"/>${[[g.eb, "#A3E635"], [g.ea, "#E879F9"]].map(([p, c]) => `<line x1="${X(p)}" x2="${X(p)}" y1="0" y2="100" stroke="${c}" stroke-width="1.6" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>`).join("")}` : "";
+  const segs = l => Object.entries(l.v).map(([k, s]) => { if (!L3) return `<i style="flex:${s};background:${vcol(k)}" title="${nm(k)} ${s.toLocaleString()}"></i>`; const r = rng(hs(k + l.price)), q = 1 + Math.floor(r() * Math.min(5, 1 + s / 400)), w = Array.from({length: q}, () => .3 + r()), W2 = w.reduce((a, c) => a + c, 0); return w.map((z, i) => `<i style="flex:${s * z / W2};background:${vcol(k)};opacity:${i % 2 ? .62 : 1}" title="${nm(k)} order ${i + 1}/${q} · ~${Math.round(s * z / W2 / 100) * 100}"></i>`).join(""); }).join("");
+  const row = (side, l) => { const e = evs.find(x => x.side === side && Math.abs(x.price - l.price) < 1e-6), ice = e && e.type[0] === "i", ing = g && (side === "bid" ? l.price >= g.eb : l.price <= g.ea); return `<div class="rr ${side} ${ing ? "gate" : ""}"><b>${f(l.price, dd)}</b><span><span class="bar" style="width:${(l.size / mx * 100).toFixed(1)}%">${segs(l)}</span></span><u>${e ? `<em class="ev ${ice ? "cy" : "am"}" title="${TIP[e.type]}">${ice ? "+1" : "−1"}</em> ` : ""}${cmp.format(l.size)}</u></div>`; };
   const tabs = ["L2", "L3"].map(k => `<button class="btn ${G.rv === k ? "on" : ""}" data-rv="${k}" title="${TIER[k].d}">${k}${k === "L3" && !PRO ? " " + LOCK : ""}</button>`).join("");
   const tot = Object.entries(A.V).map(([k, v]) => [k, sum(v.bids.slice(0, N)) + sum(v.asks.slice(0, N))]), all = tot.reduce((s, x) => s + x[1], 0) || 1;
-  el.innerHTML = `<div class="flex items-center justify-between"><div class="flex gap-1">${tabs}</div><span class="text-slate-400">${L3 ? "Order queues (sample MBO)" : "Depth by venue"} · 10 levels</span></div>
+  const gbtn = [0, 3, 5, 10, 15].map(k => `<button class="btn ${G.gate === k ? "on" : ""}" data-gate="${k}">${k || "Off"}</button>`).join("");
+  let gh = `<div class="mt-1 text-slate-500">Pick 3, 5, 10 or 15 levels to total the resting shares from the touch out to that depth on each side.</div>`;
+  if (g) { const hh = GH.h, tt = g.b + g.a || 1, mxv = Math.max(1, ...hh.map(q => Math.max(q.b, q.a))), pl = k => hh.map((q, i) => `${(i / Math.max(1, hh.length - 1) * 120).toFixed(1)},${(28 - q[k] / mxv * 26).toFixed(1)}`).join(" "), rt = v => (v >= 0 ? "+" : "−") + cmp.format(Math.abs(v)) + "/s", cl = g.ch >= .5 ? ["High", "#F43F5E"] : g.ch >= .25 ? ["Medium", "#FBBF24"] : ["Low", "#34D399"];
+    gh = `<div class="mt-1.5 grid grid-cols-2 gap-2 mono"><div><div class="text-[9px] text-slate-400">BUY ${f(g.eb, dd)} → ${f(bids[0].price, dd)} · ${((t.mid - g.eb) * 100).toFixed(1)}¢</div><div class="text-sm font-bold" style="color:#A3E635">${g.b.toLocaleString()} sh</div><div style="color:${g.rb >= 0 ? "#34D399" : "#FBBF24"}">${rt(g.rb)}</div></div><div class="text-right"><div class="text-[9px] text-slate-400">${f(asks[0].price, dd)} → ${f(g.ea, dd)} SELL · ${((g.ea - t.mid) * 100).toFixed(1)}¢</div><div class="text-sm font-bold" style="color:#E879F9">${g.a.toLocaleString()} sh</div><div style="color:${g.ra >= 0 ? "#34D399" : "#FBBF24"}">${rt(g.ra)}</div></div></div>
+<div class="mt-1 flex h-1.5 overflow-hidden rounded bg-slate-800"><i style="width:${g.b / tt * 100}%;background:#A3E635"></i><i style="width:${g.a / tt * 100}%;background:#E879F9"></i></div>
+<svg viewBox="0 0 120 30" preserveAspectRatio="none" class="mt-1 h-8 w-full" role="img" aria-label="Live gated size history"><polyline fill="none" stroke="#A3E635" stroke-width="1.4" vector-effect="non-scaling-stroke" points="${pl("b")}"/><polyline fill="none" stroke="#E879F9" stroke-width="1.4" vector-effect="non-scaling-stroke" points="${pl("a")}"/></svg>
+<div class="flex justify-between text-[9px] text-slate-400"><span>Buy ${(g.b / tt * 100).toFixed(0)}% · Sell ${(g.a / tt * 100).toFixed(0)}%</span><span>Contested <b style="color:${cl[1]}">${cl[0]}</b> · ${(g.ch * 100).toFixed(0)}% turnover/tick</span></div>`; }
+  el.innerHTML = `<div class="flex items-center justify-between"><div class="flex gap-1">${tabs}</div><span class="text-slate-400">${L3 ? "Order queues (sample MBO)" : "Depth by venue"} · hover size, click pin</span></div>
 <div class="mt-2 flex justify-between mono"><span class="text-emerald-400">Bid ${cmp.format(bT)}</span><span class="${im >= 0 ? "text-emerald-400" : "text-rose-400"}">Imbalance ${im >= 0 ? "+" : ""}${(im * 100).toFixed(0)}%</span><span class="text-rose-400">Ask ${cmp.format(aT)}</span></div>
-<svg viewBox="0 0 300 100" preserveAspectRatio="none" class="mt-1 w-full h-[120px] rounded border border-slate-800 bg-slate-950/70" role="img" aria-label="Cumulative bid and ask depth">${area(bids, "#10B981")}${area(asks, "#F43F5E")}<line x1="${X(t.mid)}" x2="${X(t.mid)}" y1="0" y2="100" stroke="#38BDF8" stroke-width="1.6" vector-effect="non-scaling-stroke" style="filter:drop-shadow(0 0 3px #38BDF8)"/></svg>
+<div class="rc-chart relative mt-1 cursor-crosshair"><svg viewBox="0 0 300 100" preserveAspectRatio="none" class="block w-full h-[120px] rounded border border-slate-800 bg-slate-950/70" role="img" aria-label="Cumulative bid and ask depth">${area(bids, "#10B981")}${area(asks, "#F43F5E")}${gl}<line x1="${X(t.mid)}" x2="${X(t.mid)}" y1="0" y2="100" stroke="#38BDF8" stroke-width="1.6" vector-effect="non-scaling-stroke" style="filter:drop-shadow(0 0 3px #38BDF8)"/></svg><div id="rc-ov" class="pointer-events-none absolute inset-0 overflow-hidden">${crossHTML()}</div></div>
 <div class="flex justify-between mono text-[9px] text-slate-500"><span>${f(pmin, dd)}</span><span class="text-sky-400">${f(t.mid, dd + 1)}</span><span>${f(pmax, dd)}</span></div>
+<div class="mt-1.5 rounded border border-slate-800 bg-slate-950/60 p-1.5"><div class="flex items-center justify-between"><span class="text-slate-300">Price gate · levels from touch</span><div class="flex gap-1">${gbtn}</div></div>${gh}</div>
 <div class="mt-1.5">${asks.slice().reverse().map(l => row("ask", l)).join("")}<div class="mid2">Spread ${f(t.ba - t.bb, dd)} · Micro ${f(t.micro, dd + 1)}</div>${bids.map(l => row("bid", l)).join("")}</div>
 <div class="mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[9px] text-slate-400">${tot.sort((a, c) => c[1] - a[1]).map(([k, v]) => `<span><b style="color:${vcol(k)}">■</b> ${nm(k)} ${(v / all * 100).toFixed(0)}%</span>`).join("")}</div>`;
 }
@@ -205,33 +230,66 @@ function heat() {
   x.fillStyle = "#94A3B8"; x.fillText("−180s", 4, h - 4); x.fillText("now", hw - 22, h - 4); x.fillText(`+${G.hz}s`, w - aw - 40, h - 4);
 }
 
-/* ---------- Order-flow spectrogram: per-price-level change in resting size, plotted on the live price axis ---------- */
-const SP = {cols: [], prev: null, sym: ""};
+/* ---------- Order-flow spectrogram: bid x ask footprint with volume profile (sample prints until the live tape connects) ---------- */
+const SP = {cols: [], sym: "", lastT: 0, wall: null};
+function fpSynth(m, mid) { const tk = tkOf(mid), kc = Math.round(mid / tk); for (let i = 0; i < 8; i++) { const k = kc + Math.round((Math.random() + Math.random() - 1) * 4), e = m.get(k) || [0, 0]; e[Math.random() > .5 ? 1 : 0] += 100 * Math.ceil(Math.random() ** 2 * 12); m.set(k, e); } }
 function specIngest(d) {
-  const cur = new Map([...d.A.asks, ...d.A.bids].map(l => [l.price, l.size])), mid = d.book.mid;
-  if (SP.sym !== d.sym) { SP.sym = d.sym; SP.prev = null; const tk = tkOf(mid); SP.cols = H.cols.slice(-89).map(c => { const m = new Map(); for (let i = 0; i < 12; i++) [1, -1].forEach(s => m.set(+(c.mid + s * tk * (i + .5)).toFixed(4), (Math.random() - .5) * 3000 * (1 - i / 16))); return {mid: c.mid, m}; }); } // sample seed history
-  if (SP.prev) { const m = new Map(); cur.forEach((s, p) => { if (SP.prev.has(p)) m.set(p, s - SP.prev.get(p)); }); SP.cols.push({mid, m}); if (SP.cols.length > 90) SP.cols.shift(); }
-  SP.prev = cur;
+  const mid = d.book.mid, tk = tkOf(mid), tp = d.tape || [], big = a => a.slice(0, 10).reduce((m, l) => l.size > m.size ? l : m, a[0]);
+  if (SP.sym !== d.sym) { SP.sym = d.sym; SP.lastT = 0; SP.cols = H.cols.slice(-89).map(c => { const m = new Map(); fpSynth(m, c.mid); return {mid: c.mid, m}; }); }
+  const m = new Map(); if (!Sonar.live) fpSynth(m, mid);
+  tp.filter(x => x.t > SP.lastT).forEach(x => { const k = Math.round(x.price / tk), e = m.get(k) || [0, 0]; e[x.side === "buy" ? 1 : 0] += x.size; m.set(k, e); });
+  SP.lastT = Math.max(SP.lastT, ...tp.map(x => x.t)); SP.cols.push({mid, m}); if (SP.cols.length > 90) SP.cols.shift();
+  SP.wall = {a: big(d.A.asks).price, b: big(d.A.bids).price};
 }
 function spec() {
   const cv = $("#spec"); if (!cv || !SP.cols.length) return;
   const w = cv.clientWidth, h = cv.clientHeight, dpr = devicePixelRatio || 1; cv.width = w * dpr; cv.height = h * dpr;
-  const x = cv.getContext("2d"); x.scale(dpr, dpr); x.font = "10px 'JetBrains Mono',monospace";
-  const mid = SP.cols[SP.cols.length - 1].mid, tk = tkOf(mid), half = 14 * tk, pmin = mid - half, pmax = mid + half, dd = dec(mid);
-  const aw = 54, cw = (w - aw) / 90, Y = p => 6 + (h - 12) * (1 - (p - pmin) / (pmax - pmin)), rh = Math.max(2, (h - 12) * tk / (pmax - pmin)), X = i => (90 - SP.cols.length + i) * cw;
-  let mx = 1, bA = 0, aA = 0; SP.cols.forEach(c => c.m.forEach(v => mx = Math.max(mx, Math.abs(v))));
-  x.fillStyle = "#94A3B8"; x.lineWidth = 1;
-  for (let i = 0; i <= 4; i++) { const pr = pmin + (pmax - pmin) * i / 4, y = Y(pr); x.strokeStyle = "rgba(30,41,59,.8)"; x.beginPath(); x.moveTo(0, y); x.lineTo(w - aw, y); x.stroke(); x.fillText(f(pr, dd), w - aw + 6, y + 3); }
-  SP.cols.forEach((c, i) => c.m.forEach((v, p) => {
-    const a = Math.min(1, Math.sqrt(Math.abs(v) / mx)); if (a < .08) return; const ask = p >= c.mid, hh = rh * (.55 + .45 * a);
-    if (v < 0) x.fillStyle = `rgba(245,158,11,${(.12 + .5 * a).toFixed(2)})`;
-    else { x.fillStyle = ask ? `hsla(${(18 - 18 * a).toFixed(0)},92%,${(46 + 10 * a).toFixed(0)}%,${(.2 + .75 * a).toFixed(2)})` : `hsla(${(168 - 30 * a).toFixed(0)},78%,${(36 + 14 * a).toFixed(0)}%,${(.2 + .75 * a).toFixed(2)})`; if (i >= SP.cols.length - 30) { if (ask) aA += v; else bA += v; } }
-    x.fillRect(X(i), Y(p) - hh / 2, cw + .5, hh);
-  }));
-  x.strokeStyle = "rgba(248,250,252,.7)"; x.lineWidth = 1.2; x.beginPath(); SP.cols.forEach((c, i) => { const px = X(i) + cw / 2; i ? x.lineTo(px, Y(c.mid)) : x.moveTo(px, Y(c.mid)); }); x.stroke();
-  curLine(x, w, aw, Y(mid), mid, dd, bA, aA, ["Bid adds", "Ask adds"]);
-  x.fillStyle = "#F43F5E"; x.fillText("▲ asks · sell side", 6, 24); x.fillStyle = "#10B981"; x.fillText("▼ bids · buy side", 6, h - 16);
-  x.fillStyle = "#94A3B8"; x.fillText("−180s", 4, h - 3); x.fillText("now", w - aw - 24, h - 3);
+  const x = cv.getContext("2d"); x.scale(dpr, dpr); x.font = "8px 'JetBrains Mono',monospace";
+  const mid = SP.cols[SP.cols.length - 1].mid, tk = tkOf(mid), dd = dec(mid), kc = Math.round(mid / tk), R = 15, top = 20, bot = 22, aw = 54, pw = 56, x0 = pw + 4, x1 = w - aw, K = 6;
+  const rh = (h - top - bot) / R, Yp = p => top + (kc + 7 - p / tk + .5) * rh, inW = k => Math.abs(k - kc) <= 7, bars = [];
+  for (let e = SP.cols.length; e > 0; e -= K) { const cs = SP.cols.slice(Math.max(0, e - K), e), m = new Map(); cs.forEach(c => c.m.forEach((v, k) => { const q = m.get(k) || [0, 0]; q[0] += v[0]; q[1] += v[1]; m.set(k, q); })); bars.unshift({m, mid: cs[cs.length - 1].mid}); }
+  const bw = (x1 - x0) / Math.ceil(90 / K), bx = i => x1 - (bars.length - i) * bw, prof = new Map(); let mxC = 1, bT = 0, aT = 0;
+  bars.forEach(b => b.m.forEach((v, k) => { if (!inW(k)) return; mxC = Math.max(mxC, v[0] + v[1]); const q = prof.get(k) || [0, 0]; q[0] += v[0]; q[1] += v[1]; prof.set(k, q); aT += v[0]; bT += v[1]; }));
+  const mxP = Math.max(1, ...[...prof.values()].map(v => v[0] + v[1])), poc = [...prof].reduce((m, [k, v]) => v[0] + v[1] > m[1] ? [k, v[0] + v[1]] : m, [kc, -1])[0];
+  x.lineWidth = 1;
+  for (let k = kc - 7; k <= kc + 7; k++) { const y = Yp(k * tk); x.strokeStyle = "rgba(30,41,59,.55)"; x.beginPath(); x.moveTo(x0, y + rh / 2); x.lineTo(x1, y + rh / 2); x.stroke(); if ((k - kc) % 2 === 0) { x.fillStyle = "#94A3B8"; x.fillText(f(k * tk, dd), x1 + 6, y + 3); } }
+  if (SP.wall) [[SP.wall.a, "244,63,94"], [SP.wall.b, "16,185,129"]].forEach(([p, c]) => { const y = Yp(p); if (y < top || y > h - bot) return; x.fillStyle = `rgba(${c},.12)`; x.fillRect(x0, y - rh / 2, x1 - x0, rh); x.fillStyle = `rgba(${c},.95)`; x.fillText("S/R", x0 + 3, y + 3); });
+  prof.forEach(([s, b], k) => { const y = Yp(k * tk) - rh / 2, ws = s / mxP * pw, wb = b / mxP * pw; x.fillStyle = "rgba(244,63,94,.7)"; x.fillRect(0, y + 1, ws, rh - 2); x.fillStyle = "rgba(16,185,129,.7)"; x.fillRect(ws, y + 1, wb, rh - 2); if (k === poc) { x.strokeStyle = "#FBBF24"; x.strokeRect(.5, y + 1.5, ws + wb, rh - 3); } });
+  bars.forEach((b, i) => {
+    const X0 = bx(i) + 1, cw = bw - 2, hl = cw / 2; let pk = -1, pocK = null, dl = 0;
+    b.m.forEach((v, k) => { dl += v[1] - v[0]; if (!inW(k)) return; const tot = v[0] + v[1], y = Yp(k * tk) - rh / 2; if (tot > pk) { pk = tot; pocK = k; }
+      x.fillStyle = (v[1] >= v[0] ? "rgba(16,185,129," : "rgba(244,63,94,") + (.08 + .4 * tot / mxC).toFixed(2) + ")"; x.fillRect(X0, y + .5, cw, rh - 1);
+      const ib = v[1] >= 3 * v[0] && v[1] >= 300, is = v[0] >= 3 * v[1] && v[0] >= 300; if (ib) { x.fillStyle = "#22C55E"; x.fillRect(X0 + hl, y + .5, hl, rh - 1); } if (is) { x.fillStyle = "#EF4444"; x.fillRect(X0, y + .5, hl, rh - 1); }
+      if (rh >= 9) { x.textAlign = "left"; x.fillStyle = is ? "#0B1120" : "#FB7185"; x.fillText(cmp.format(v[0]), X0 + 2, y + rh / 2 + 3); x.textAlign = "right"; x.fillStyle = ib ? "#0B1120" : "#34D399"; x.fillText(cmp.format(v[1]), X0 + cw - 2, y + rh / 2 + 3); x.textAlign = "left"; } });
+    if (pocK !== null) { x.strokeStyle = "#FBBF24"; x.strokeRect(X0 + .5, Yp(pocK * tk) - rh / 2 + .5, cw - 1, rh - 1); }
+    x.textAlign = "center"; x.fillStyle = dl >= 0 ? "#34D399" : "#FB7185"; x.fillText((dl >= 0 ? "+" : "") + cmp.format(dl), X0 + cw / 2, h - 12); x.textAlign = "left";
+  });
+  x.strokeStyle = "rgba(248,250,252,.7)"; x.lineWidth = 1.2; x.beginPath(); bars.forEach((b, i) => { const px = bx(i) + bw / 2, py = Yp(b.mid); i ? x.lineTo(px, py) : x.moveTo(px, py); }); x.stroke();
+  x.setLineDash([4, 3]); x.lineWidth = 1; x.strokeStyle = "rgba(251,191,36,.8)"; x.beginPath(); x.moveTo(x0, Yp(poc * tk)); x.lineTo(x1, Yp(poc * tk)); x.stroke(); x.setLineDash([]); x.fillStyle = "#FBBF24"; x.fillText("POC", x1 - 22, Yp(poc * tk) - 3);
+  curLine(x, w, aw, Yp(mid), mid, dd, bT, aT, ["Buy vol", "Sell vol"]);
+  x.fillStyle = "#94A3B8"; x.fillText("−180s", x0, h - 3); x.fillText("now", x1 - 24, h - 3);
+}
+
+/* ---------- Flow & activity signals (sample-derived from the tape and book until the backend supplies them) ---------- */
+const FL = {sym: "", v: [], vl: [], sk: [], an: [], n: 0, tot: 0, sa: 0};
+function flow2(d) {
+  const el = $("#flow2"); if (!el) return;
+  if (FL.sym !== d.sym) Object.assign(FL, {sym: d.sym, v: [], vl: [], sk: [], an: [], n: 0, tot: 0, sa: 0});
+  const A = d.A, t = tob(A), tp = d.tape || [], ts = tp.map(q => q.t), span = Math.max(1, (Math.max(...ts, 0) - Math.min(...ts, Infinity)) / 1000);
+  const vm = tp.reduce((s, q) => s + q.size, 0) / span * 60, vel = tp.length / span, bf = tp.length ? tp.filter(q => q.side === "buy").length / tp.length : .5;
+  FL.n++; FL.tot += vm; const avg = FL.tot / FL.n; [[FL.v, vm], [FL.vl, vel], [FL.sk, bf]].forEach(([a, v]) => { a.push(v); if (a.length > 40) a.shift(); });
+  const sp = t.ba - t.bb, mdn = FL.sa || sp; FL.sa = FL.sa ? FL.sa * .95 + sp * .05 : sp;
+  const st = t.bb > t.ba ? 3 : (t.bb === t.ba || sp > 2.5 * mdn) ? 2 : (d.book.events || []).some(e => e.type[0] === "u") ? 1 : 0; FL.an.push(st); if (FL.an.length > 40) FL.an.shift();
+  const nl = n => [sum(A.bids.slice(0, n)), sum(A.asks.slice(0, n))], r5 = nl(5), r10 = nl(10), im5 = (r5[0] - r5[1]) / ((r5[0] + r5[1]) || 1), AC = ["#334155", "#F59E0B", "#FB923C", "#F43F5E"];
+  const T = (l, v, c, vis, sub) => `<div class="flex flex-col rounded border border-slate-800 bg-slate-950/80 px-2 py-1.5"><div class="text-[10px] text-slate-400">${l}</div><div class="mono text-sm font-semibold" style="color:${c}">${v}</div><div class="my-1 flex-1 min-h-[26px]">${vis}</div><div class="text-[9px] text-slate-500">${sub}</div></div>`;
+  const bars = (a, c, ref) => { const m = Math.max(1, ...a, ref || 0); return `<svg viewBox="0 0 80 30" preserveAspectRatio="none" class="h-full w-full" aria-hidden="true">${a.map((v, i) => `<rect x="${i * 2}" y="${(30 - v / m * 28).toFixed(1)}" width="1.5" height="${(v / m * 28).toFixed(1)}" fill="${c}"/>`).join("")}${ref ? `<line x1="0" x2="80" y1="${(30 - ref / m * 28).toFixed(1)}" y2="${(30 - ref / m * 28).toFixed(1)}" stroke="#FBBF24" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/>` : ""}</svg>`; };
+  const strip = (a, fn, ht) => `<svg viewBox="0 0 80 8" preserveAspectRatio="none" class="w-full ${ht || "h-2"}" aria-hidden="true">${a.map((v, i) => `<rect x="${i * 2}" width="2" height="8" fill="${fn(v)}"/>`).join("")}</svg>`;
+  const split = (l, [b, a]) => `<div class="mono flex items-center gap-1 text-[9px]"><span class="w-9 text-slate-400">${l}</span><span class="w-9 text-right text-emerald-400">${cmp.format(b)}</span><div class="flex h-1.5 flex-1 overflow-hidden rounded bg-slate-800"><i style="width:${b / ((b + a) || 1) * 100}%;background:#10B981"></i><i style="width:${a / ((b + a) || 1) * 100}%;background:#F43F5E"></i></div><span class="w-9 text-rose-400">${cmp.format(a)}</span></div>`;
+  const mxv = Math.max(.001, ...FL.vl), flagged = FL.an.filter(v => v > 0).length;
+  el.innerHTML = T("Avg volume / min", cmp.format(vm) + "/min", "#00F0FF", bars(FL.v, "rgba(0,240,255,.75)", avg), `session avg ${cmp.format(avg)}/min · ${((vm / avg - 1) * 100).toFixed(0)}% vs avg · ${$("#sess") ? $("#sess").textContent : ""}`)
+  + T("Order velocity", vel.toFixed(1) + " prints/s", "#A78BFA", `<div class="flex h-full flex-col gap-0.5">${bars(FL.vl, "rgba(167,139,250,.8)")}${strip(FL.vl, v => `rgba(0,240,255,${(.08 + .9 * v / mxv).toFixed(2)})`)}${strip(FL.sk, v => v >= .5 ? `rgba(16,185,129,${(.2 + (v - .5) * 1.6).toFixed(2)})` : `rgba(244,63,94,${(.2 + (.5 - v) * 1.6).toFixed(2)})`)}</div>`, `intensity strip · buy/sell skew strip (${(bf * 100).toFixed(0)}% buys)`)
+  + T("Resting orders · near touch", (im5 >= 0 ? "+" : "") + (im5 * 100).toFixed(0) + "% bid", im5 >= 0 ? "#34D399" : "#FB7185", `<div class="flex h-full flex-col justify-center gap-1">${split("5 lvl", r5)}${split("10 lvl", r10)}</div>`, "shares on nearest 5 / 10 levels · buy left, sell right")
+  + T("Book integrity", ["Book clean", "Depletion seen", "Locked / wide", "CROSSED"][st], st ? AC[st] : "#34D399", `<div class="flex h-full items-center">${strip(FL.an, v => AC[v], "h-3")}</div>`, `${flagged} flagged of last ${FL.an.length} ticks · spread ${f(sp / t.mid * 1e4, 1)} bps`);
 }
 
 /* ---------- Evaluation board (sample values until the first data pull) ---------- */
@@ -291,7 +349,7 @@ const download = () => { const a = document.createElement("a"); a.href = URL.cre
 window.SonarRequests = {list: () => LS("zia_subscription_requests") || [], download};
 
 /* ---------- Command palette ---------- */
-const SYMS = ["ONEG", "CHOW", "SGRX", "KLNR", "VRTA", "TRBO", "NOVA", "PLZN"];
+const SYMS = ["SPY", "ONEG", "CHOW", "SGRX", "KLNR", "VRTA", "TRBO", "NOVA", "PLZN"];
 const PANELS = [["Liquidity heatmap", "heat"], ["Order-flow spectrogram", "spectro"], ["Model evaluation board", "evalb"], ["L2-L3 book reconstruction", "recon"], ["Barrier forecast", "barrier"], ["Order book ladder", "book"], ["Feature monitor", "feat"]];
 const CMDS = () => [...SYMS.map(s => ({t: "Load ticker " + s, k: "symbol " + s, run: () => Sonar.setSym(s)})),
   ...["1m", "5m", "15m", "1D"].map((tf, i) => ({t: "Timeframe " + tf, k: "chart interval", run: () => { const b = $$("[data-tf]")[i]; if (b) b.click(); }})),
@@ -341,7 +399,7 @@ document.addEventListener("sonar:tick", e => {
   const hl = $("#heat-sym"); if (hl) hl.textContent = `${d.sym} · ${d.tf}`;
   const sc = $("#sync-chip"); if (sc) sc.textContent = `● Synced · ${d.sym} · ${$$("[data-panel]").length} panels`;
   if (changed) flash();
-  [setBar, ladder, recon, barrier, features, ingest, heat, specIngest, spec, evalBoard, latency].forEach(fn => { try { fn(d); } catch (err) { console.error("sonar-pro", fn.name, err); } });
+  [setBar, ladder, recon, barrier, features, flow2, ingest, heat, specIngest, spec, evalBoard, latency].forEach(fn => { try { fn(d); } catch (err) { console.error("sonar-pro", fn.name, err); } });
 });
 document.addEventListener("click", e => {
   const t = e.target;
@@ -351,6 +409,7 @@ document.addEventListener("click", e => {
   if (t.closest("[data-back]")) { W.step--; return subRender(); }
   if (t.closest("[data-submit]")) return subSubmit();
   if (t.closest("[data-dl]")) return download();
+  const gt = t.closest("[data-gate]"); if (gt) { G.gate = +gt.dataset.gate; return LAST && recon(LAST); }
   const dk = t.closest("[data-dock]"); if (dk) return dock(dk.dataset.dock);
   const rv = t.closest("[data-rv]"); if (rv) { if (rv.dataset.rv === "L3" && !PRO) return sub(); G.rv = rv.dataset.rv; return LAST && recon(LAST); }
   const tr = t.closest("[data-tier]"); if (tr) { if (tr.dataset.tier === "L3" && !PRO) return sub(); G.tier = tr.dataset.tier; vbar(); return LAST && ladder(LAST); }
@@ -388,4 +447,11 @@ function dock(k, on) {
   ["movers", "lat"].forEach(n => { const s = $(`[data-dk="${n}"]`); if (s) s.classList.toggle("shut", !DK[n]); $$(`.dk-tab[data-dock="${n}"]`).forEach(b => { b.classList.toggle("on", !!DK[n]); b.setAttribute("aria-expanded", String(!!DK[n])); }); });
 }
 vbar(); loadLayout(); dock();
+const rcEl = $("#recon");
+if (rcEl) { // hover = crosshair with resting shares at the price; click = pin / unpin that level
+  const px = e => { const s = rcEl.querySelector(".rc-chart svg"); if (!s || !RC.A) return null; const r = s.getBoundingClientRect(); return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom ? null : RC.pmin + (e.clientX - r.left) / r.width * (RC.pmax - RC.pmin); };
+  rcEl.addEventListener("mousemove", e => { const p = px(e); RC.hov = p == null ? null : lvlAt(RC.A, p).price; paintCross(); });
+  rcEl.addEventListener("mouseleave", () => { RC.hov = null; paintCross(); });
+  rcEl.addEventListener("click", e => { const p = px(e); if (p == null) return; const q = lvlAt(RC.A, p).price; RC.pin = RC.pin != null && Math.abs(RC.pin - q) < tkOf(RC.mid) / 2 ? null : q; paintCross(); });
+}
 })();
