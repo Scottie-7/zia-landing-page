@@ -17,7 +17,7 @@ const LS = (k, v) => { try { if (v === undefined) return JSON.parse(localStorage
 /* ---- Venue catalog. c = placeholder estimate in USD/month for Level 2 (edit freely); free = included in the free preview ---- */
 const VEN = [{id: "NSDQ", n: "Nasdaq", c: 15, free: 1}, {id: "ARCA", n: "NYSE Arca", c: 15, free: 1}, {id: "NYSE", n: "NYSE", c: 20}, {id: "AMEX", n: "NYSE American", c: 10}, {id: "BZX", n: "Cboe BZX", c: 12}, {id: "BYX", n: "Cboe BYX", c: 8}, {id: "EDGX", n: "Cboe EDGX", c: 12}, {id: "EDGA", n: "Cboe EDGA", c: 8}, {id: "IEX", n: "IEX", c: 6}, {id: "MEMX", n: "MEMX", c: 10}, {id: "BX", n: "Nasdaq BX", c: 8}, {id: "PSX", n: "Nasdaq PSX", c: 8}];
 const TIER = {L1: {n: "Level 1", m: .3, d: "NBBO quotes and trades"}, L2: {n: "Level 2", m: 1, d: "Price-level depth by venue"}, L3: {n: "Level 3", m: 2.5, d: "Order-level (MBO) reconstruction"}};
-const G = {sym: "", hz: 180, k: 1, sel: new Set(["NSDQ", "ARCA"]), tier: "L2", flip: false, pop: false, rv: "L2", gate: 0};
+const G = {sym: "", hz: 180, k: 1, sel: new Set(["NSDQ", "ARCA"]), tier: "L2", flip: false, pop: false, rv: "L2", gate: 5};
 const nm = k => (VEN.find(v => v.id === k) || {n: k}).n, isLocked = v => !v.free && !PRO;
 const est = (ids, t) => [...ids].reduce((s, id) => { const v = VEN.find(x => x.id === id); return s + (v.free && t !== "L3" ? 0 : v.c * TIER[t].m); }, 0);
 let LAST = null;
@@ -98,7 +98,7 @@ function ladder(d) {
 const H = {cols: [], bub: [], ev: [], n: 0, sym: "", lastT: 0, bar: null, p: null};
 const probs = d => { if (Sonar.live || (G.hz === 180 && d.probs)) return d.probs; const r = rng(hs(d.sym + G.hz) + Math.floor(Date.now() / 5000)), a = .18 + r() * .22, b = .2 + r() * .22; return {p_down: a, p_up: b, p_neutral: 1 - a - b}; };
 function setBar(d) {
-  const t = tob(d.A), sig15 = t.mid >= 100 ? .0002 + (hs(d.sym) % 30) / 1e5 : .0025 + (hs(d.sym) % 30) / 1e4, sigH = sig15 * Math.sqrt(G.hz / 15), theta = Math.max(.0015, G.k * sigH); // sample sigma; backend supplies real values
+  const t = tob(d.A), hi = t.mid >= 100, sig15 = hi ? (2 + hs(d.sym) % 4) * tkOf(t.mid) / t.mid / Math.sqrt(12) : .0025 + (hs(d.sym) % 30) / 1e4, sigH = sig15 * Math.sqrt(G.hz / 15), theta = Math.max(hi ? 0 : .0015, G.k * sigH); // sample sigma; backend supplies real values
   H.bar = {ask: t.ba, bid: t.bb, k: G.k, sigH, theta, up: t.ba * (1 + theta), lo: t.bb * (1 - theta)}; H.p = probs(d);
 }
 function barrier(d) {

@@ -65,7 +65,7 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
       </div>
     </section>
     <section class="dk-sec" data-dk="lat">
-      <div class="flex items-center gap-2 px-2 py-1.5 border-b border-slate-800"><h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Pipeline Latency</h2><span class="text-[9px] text-slate-500"></span><button class="btn ml-auto font-mono" data-dock="lat" aria-label="Collapse latency">–</button></div>
+      <div class="flex items-center gap-2 px-2 py-1.5 border-b border-slate-800"><h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Pipeline Latency</h2><span class="text-[9px] text-slate-500">sample timings</span><button class="btn ml-auto font-mono" data-dock="lat" aria-label="Collapse latency">–</button></div>
       <div id="lat" class="px-2 py-2"></div>
     </section>
   </div>
@@ -129,8 +129,8 @@ body{background:#080C14;color:#F8FAFC;font-family:Inter,sans-serif;overflow-x:hi
           <span id="csym" class="mono font-semibold text-sm text-cyan-400">SPY · 1m</span>
           <span id="ohlc" class="mono text-[11px] text-slate-400">TradingView Advanced Real-Time Chart</span><button id="chart-set" class="btn ml-auto font-mono" aria-expanded="false" title="Chart type, indicators and tools">Chart settings</button><div id="chart-pop" class="hidden absolute right-2 top-9 z-30 w-64 max-h-[540px] overflow-auto rounded border border-slate-700 bg-slate-950/95 p-3 text-[11px] text-slate-300 shadow-2xl"></div>
         </div>
-        <div class="relative h-[600px] mt-1 w-full overflow-hidden rounded">
-          <div id="tradingview_chart" class="w-full h-full"></div>
+        <div class="relative flex-1 min-h-[670px] mt-1 w-full overflow-hidden rounded">
+          <div id="tradingview_chart" class="absolute inset-0 w-full h-full"></div>
         </div>
         <p class="px-1 pt-1 text-[10px] text-slate-500 border-t border-slate-800/50 mt-auto">Chart powered by <a class="underline hover:text-slate-400" href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView Advanced Real-Time Chart™</a></p>
       </div>
